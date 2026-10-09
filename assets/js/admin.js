@@ -10,11 +10,16 @@
 ( function () {
 	'use strict';
 
-	if ( typeof window.MN_MM === 'undefined' ) {
+	if ( typeof window.PNMF === 'undefined' ) {
 		return;
 	}
 
-	const CFG = window.MN_MM;
+	const CFG = window.PNMF;
+
+	/* wp_localize_script 會把所有純量轉成字串（PHP 端 int 0 到這裡變 '0'，
+	 * 而 '0' 在 JS 是 truthy）——不正規化的話，免費版的 Pro 鎖定樣式、
+	 * upsell 彈窗攔截與 Pro UI 綁定全部會失準。 */
+	CFG.pro = ( '1' === CFG.pro || 1 === CFG.pro || true === CFG.pro );
 
 	/* wp.i18n（PHP 端已把 wp-i18n 註冊為依賴）；帶後備避免載入順序問題。 */
 	const i18n = window.wp && window.wp.i18n ? window.wp.i18n : {};
@@ -34,7 +39,7 @@
 		sort: 'date-DESC',
 		includeChildren: true,
 		/* 檢視模式：grid（縮略圖）/ list（列表）。記在 localStorage。 */
-		view: localStorage.getItem( 'mn-mm-view' ) === 'list' ? 'list' : 'grid',
+		view: localStorage.getItem( 'pnmf-view' ) === 'list' ? 'list' : 'grid',
 		paged: 1,
 		perPage: CFG.perPage || 60,
 		total: 0,
@@ -86,7 +91,7 @@
 		return /^[0-9a-f]{6}$/.test( h ) ? '#' + h : '';
 	}
 
-	/** colVars('#a23') → '--mn-c:#aa2233;--mn-c-soft:rgba(…,.16);--mn-c-hover:rgba(…,.3)' */
+	/** colVars('#a23') → '--pnmf-c:#aa2233;--pnmf-c-soft:rgba(…,.16);--pnmf-c-hover:rgba(…,.3)' */
 	function colVars( c ) {
 		const hex = colHex( c );
 		if ( ! hex ) {
@@ -96,9 +101,9 @@
 		const g = parseInt( hex.slice( 3, 5 ), 16 );
 		const b = parseInt( hex.slice( 5, 7 ), 16 );
 		return (
-			'--mn-c:' + hex +
-			';--mn-c-soft:rgba(' + r + ',' + g + ',' + b + ',.16)' +
-			';--mn-c-hover:rgba(' + r + ',' + g + ',' + b + ',.3)'
+			'--pnmf-c:' + hex +
+			';--pnmf-c-soft:rgba(' + r + ',' + g + ',' + b + ',.16)' +
+			';--pnmf-c-hover:rgba(' + r + ',' + g + ',' + b + ',.3)'
 		);
 	}
 
@@ -108,12 +113,12 @@
 	let autoCancelled = false;
 
 	function toast( message, type ) {
-		const el = $( '#mn-mm-toast' );
+		const el = $( '#pnmf-toast' );
 		if ( ! el ) {
 			return;
 		}
 		el.textContent = message;
-		el.className = 'mn-mm-toast' + ( type ? ' is-' + type : '' );
+		el.className = 'pnmf-toast' + ( type ? ' is-' + type : '' );
 		el.hidden = false;
 		clearTimeout( toastTimer );
 		toastTimer = setTimeout( () => {
@@ -122,10 +127,10 @@
 	}
 
 	function progress( show, text, percent, cancellable ) {
-		const wrap = $( '#mn-mm-progress' );
-		const label = $( '#mn-mm-progress-text' );
-		const fill = $( '#mn-mm-progress-fill' );
-		const cancel = $( '#mn-mm-progress-cancel' );
+		const wrap = $( '#pnmf-progress' );
+		const label = $( '#pnmf-progress-text' );
+		const fill = $( '#pnmf-progress-fill' );
+		const cancel = $( '#pnmf-progress-cancel' );
 
 		if ( ! wrap ) {
 			return;
@@ -148,7 +153,7 @@
 	 */
 	async function api( action, data ) {
 		const body = new FormData();
-		body.append( 'action', 'mn_mm_' + action );
+		body.append( 'action', 'pnmf_' + action );
 		body.append( 'nonce', CFG.nonce );
 
 		Object.keys( data || {} ).forEach( ( key ) => {
@@ -200,20 +205,20 @@
 		const items = [
 			{ value: stats.total, label: __( 'Total media', 'plugnest-media-folders' ) },
 			{ value: stats.folders, label: __( 'Folders', 'plugnest-media-folders' ) },
-			{ value: stats.unassigned, label: __( 'Unassigned', 'plugnest-media-folders' ), cls: 'mn-mm-stat--warn' },
+			{ value: stats.unassigned, label: __( 'Unassigned', 'plugnest-media-folders' ), cls: 'pnmf-stat--warn' },
 			{ value: stats.used, label: __( 'In use', 'plugnest-media-folders' ) },
-			{ value: stats.unused, label: __( 'Unused', 'plugnest-media-folders' ), cls: 'mn-mm-stat--alert' },
+			{ value: stats.unused, label: __( 'Unused', 'plugnest-media-folders' ), cls: 'pnmf-stat--alert' },
 			{ value: stats.unscanned, label: __( 'Not scanned', 'plugnest-media-folders' ) },
 		];
 
-		$( '#mn-mm-stats' ).innerHTML = items
+		$( '#pnmf-stats' ).innerHTML = items
 			.map(
 				( it ) =>
-					'<div class="mn-mm-stat ' +
+					'<div class="pnmf-stat ' +
 					( it.cls || '' ) +
-					'"><div class="mn-mm-stat-value">' +
+					'"><div class="pnmf-stat-value">' +
 					esc( it.value ) +
-					'</div><div class="mn-mm-stat-label">' +
+					'</div><div class="pnmf-stat-label">' +
 					esc( it.label ) +
 					'</div></div>'
 			)
@@ -225,7 +230,7 @@
 	 * ========================================================= */
 
 	function renderTree() {
-		const tree = $( '#mn-mm-tree' );
+		const tree = $( '#pnmf-tree' );
 		const rows = [];
 
 		rows.push(
@@ -251,7 +256,7 @@
 		/* 釘選（星標）資料夾：平鋪在樹頂，點擊直接跳轉；★ 可點擊取消釘選。 */
 		const pinned = state.folders.filter( ( f ) => f.star );
 		if ( pinned.length ) {
-			rows.push( '<li class="mn-mm-tree-pinned-label">' + __( 'Pinned', 'plugnest-media-folders' ) + '</li>' );
+			rows.push( '<li class="pnmf-tree-pinned-label">' + __( 'Pinned', 'plugnest-media-folders' ) + '</li>' );
 			pinned.forEach( ( f ) => {
 				rows.push(
 					item( {
@@ -296,25 +301,25 @@
 			const pad = 10 + ( o.depth || 0 ) * 14;
 			const collapsed = state.collapsed.has( o.termId );
 			const toggle = o.hasChildren
-				? '<span class="mn-mm-tree-toggle" data-toggle="' +
+				? '<span class="pnmf-tree-toggle" data-toggle="' +
 				  o.termId +
 				  '">' +
 				  ( collapsed ? '▶' : '▼' ) +
 				  '</span>'
-				: '<span class="mn-mm-tree-toggle"></span>';
+				: '<span class="pnmf-tree-toggle"></span>';
 
 			const colorDot = o.color
-				? '<span class="mn-mm-tree-dot" style="background:' + esc( colHex( o.color ) ) + '"></span>'
+				? '<span class="pnmf-tree-dot" style="background:' + esc( colHex( o.color ) ) + '"></span>'
 				: '';
 			/* 有設定角色的資料夾：名稱後挂鎖徽章（告知受限中）。 */
 			const lockBadge = ( o.roles && o.roles.length )
-				? ' <span class="mn-mm-tree-lock" title="' + esc( __( 'Folder access roles', 'plugnest-media-folders' ) ) + '">🔒</span>'
+				? ' <span class="pnmf-tree-lock" title="' + esc( __( 'Folder access roles', 'plugnest-media-folders' ) ) + '">🔒</span>'
 				: '';
 
 			/* 釘選列的 ★ 是可點擊的取消鈕（其餘區域點擊＝跳轉）。 */
 			if ( o.pinned ) {
 				return (
-					'<li class="mn-mm-tree-item' +
+					'<li class="pnmf-tree-item' +
 					( o.active ? ' is-active' : '' ) +
 					( o.color ? ' is-colored' : '' ) +
 					' is-pinned" style="padding-left:' +
@@ -326,14 +331,14 @@
 					'"' +
 					( o.termId !== undefined ? ' data-term="' + o.termId + '"' : '' ) +
 					'>' +
-					'<button type="button" class="mn-mm-tree-star is-starred" data-star="' +
+					'<button type="button" class="pnmf-tree-star is-starred" data-star="' +
 					o.termId +
 					'" data-starred="1" title="' + __( 'Unpin folder', 'plugnest-media-folders' ) + '">★</button>' +
 					colorDot +
-					'<span class="mn-mm-tree-name">' +
+					'<span class="pnmf-tree-name">' +
 					esc( o.name ) +
 					'</span>' +
-					'<span class="mn-mm-tree-count">' +
+					'<span class="pnmf-tree-count">' +
 					esc( o.count || 0 ) +
 					'</span>' +
 					'</li>'
@@ -345,7 +350,7 @@
 				'<button type="button" data-roles="' +
 				o.termId +
 				'" title="' + __( 'Folder access roles', 'plugnest-media-folders' ) + '" class="' +
-				( CFG.pro ? '' : 'mn-mm-pro-locked' ) +
+				( CFG.pro ? '' : 'pnmf-pro-locked' ) +
 				'">🔒</button>';
 			const starBtn =
 				'<button type="button" data-star="' +
@@ -363,21 +368,21 @@
 				'" title="' + __( 'Folder color', 'plugnest-media-folders' ) + '">🎨</button>';
 			const actions =
 				o.termId !== undefined
-					? '<span class="mn-mm-tree-actions">' +
+					? '<span class="pnmf-tree-actions">' +
 					  '<button type="button" data-rename="' +
 					  o.termId +
 					  '" title="' + __( 'Rename', 'plugnest-media-folders' ) + '">✎</button>' +
 					  colorBtn +
 					  starBtn +
 					  rolesBtn +
-					  '<button type="button" class="mn-mm-danger" data-delete="' +
+					  '<button type="button" class="pnmf-danger" data-delete="' +
 					  o.termId +
 					  '" title="' + __( 'Delete', 'plugnest-media-folders' ) + '">✕</button>' +
 					  '</span>'
 					: '';
 
 			return (
-				'<li class="mn-mm-tree-item' +
+				'<li class="pnmf-tree-item' +
 				( o.active ? ' is-active' : '' ) +
 				( o.color ? ' is-colored' : '' ) +
 				'" style="padding-left:' +
@@ -391,11 +396,11 @@
 				'>' +
 					toggle +
 					colorDot +
-					'<span class="mn-mm-tree-name">' +
+					'<span class="pnmf-tree-name">' +
 					esc( o.name ) +
 					lockBadge +
 					'</span>' +
-				'<span class="mn-mm-tree-count">' +
+				'<span class="pnmf-tree-count">' +
 				esc( o.count || 0 ) +
 				'</span>' +
 				actions +
@@ -447,7 +452,7 @@
 	 * 上傳列的目標資料夾提示（跟隨目前瀏覽的資料夾）。
 	 */
 	function updateUploadTarget() {
-		const el = document.querySelector( '#mn-mm-upload-target' );
+		const el = document.querySelector( '#pnmf-upload-target' );
 		if ( ! el ) {
 			return;
 		}
@@ -464,21 +469,21 @@
 	}
 
 	function renderTags() {
-		const box = $( '#mn-mm-tags' );
+		const box = $( '#pnmf-tags' );
 		if ( ! state.tags.length ) {
-			box.innerHTML = '<span class="mn-mm-hint">' + __( 'No tags yet.', 'plugnest-media-folders' ) + '</span>';
+			box.innerHTML = '<span class="pnmf-hint">' + __( 'No tags yet.', 'plugnest-media-folders' ) + '</span>';
 			return;
 		}
 		box.innerHTML = state.tags
 			.map(
 				( t ) =>
-					'<span class="mn-mm-tag' +
+					'<span class="pnmf-tag' +
 					( state.tagIds.indexOf( t.term_id ) >= 0 ? ' is-active' : '' ) +
 					'" data-tag="' +
 					t.term_id +
 					'">' +
 					esc( t.name ) +
-					'<span class="mn-mm-tag-count">' +
+					'<span class="pnmf-tag-count">' +
 					esc( t.count ) +
 					'</span></span>'
 			)
@@ -490,16 +495,16 @@
 	 * ========================================================= */
 
 	function renderGrid( result ) {
-		const grid = $( '#mn-mm-grid' );
+		const grid = $( '#pnmf-grid' );
 		state.items = result.items || [];
 		state.total = result.total || 0;
 		state.pages = result.pages || 1;
 
-		grid.classList.toggle( 'mn-mm-list', state.view === 'list' );
+		grid.classList.toggle( 'pnmf-list', state.view === 'list' );
 		renderFoldersBar();
 
 		if ( ! state.items.length ) {
-			grid.innerHTML = '<div class="mn-mm-empty">' + esc( CFG.strings.noResult ) + '</div>';
+			grid.innerHTML = '<div class="pnmf-empty">' + esc( CFG.strings.noResult ) + '</div>';
 			renderPagination();
 			return;
 		}
@@ -509,16 +514,16 @@
 				const isSelected = state.selectAll || state.selected.has( item.id );
 				const thumb = item.thumb
 					? '<img src="' + esc( item.thumb ) + '" alt="" loading="lazy">'
-					: '<span class="dashicons ' + iconOf( item.type ) + ' mn-mm-card-icon"></span>';
+					: '<span class="dashicons ' + iconOf( item.type ) + ' pnmf-card-icon"></span>';
 
 				let flags = '';
 				if ( item.used === 0 ) {
-					flags += '<span class="mn-mm-flag mn-mm-flag--unused">' + __( 'Unused', 'plugnest-media-folders' ) + '</span>';
+					flags += '<span class="pnmf-flag pnmf-flag--unused">' + __( 'Unused', 'plugnest-media-folders' ) + '</span>';
 				} else if ( item.used === 1 ) {
-					flags += '<span class="mn-mm-flag mn-mm-flag--used">' + __( 'In use', 'plugnest-media-folders' ) + '</span>';
+					flags += '<span class="pnmf-flag pnmf-flag--used">' + __( 'In use', 'plugnest-media-folders' ) + '</span>';
 				}
 				if ( ! item.folders.length ) {
-					flags += '<span class="mn-mm-flag mn-mm-flag--unassigned">' + __( 'Unassigned', 'plugnest-media-folders' ) + '</span>';
+					flags += '<span class="pnmf-flag pnmf-flag--unassigned">' + __( 'Unassigned', 'plugnest-media-folders' ) + '</span>';
 				}
 
 				const folderLabel = item.folders.length
@@ -528,35 +533,35 @@
 				const size = item.width && item.height ? item.width + '×' + item.height : item.ext;
 
 				return (
-					'<div class="mn-mm-card' +
+					'<div class="pnmf-card' +
 					( isSelected ? ' is-selected' : '' ) +
 					'" data-id="' +
 					item.id +
 					'" draggable="true">' +
-					'<div class="mn-mm-card-thumb">' +
+					'<div class="pnmf-card-thumb">' +
 					thumb +
-					'<span class="mn-mm-card-check">✓</span>' +
-					'<span class="mn-mm-card-flags">' +
+					'<span class="pnmf-card-check">✓</span>' +
+					'<span class="pnmf-card-flags">' +
 					flags +
 					'</span>' +
-					'<button type="button" class="mn-mm-card-copy" data-url="' +
+					'<button type="button" class="pnmf-card-copy" data-url="' +
 					esc( item.url ) +
 					'" title="' + __( 'Copy URL', 'plugnest-media-folders' ) + '"><span class="dashicons dashicons-admin-links"></span></button>' +
 					'</div>' +
-					'<div class="mn-mm-card-body">' +
-					'<div class="mn-mm-card-name" title="' +
+					'<div class="pnmf-card-body">' +
+					'<div class="pnmf-card-name" title="' +
 					esc( item.filename || item.title ) +
 					'">' +
 					esc( item.filename || item.title ) +
 					'</div>' +
-					'<div class="mn-mm-card-meta"><span>' +
+					'<div class="pnmf-card-meta"><span>' +
 					esc( item.filesize_human ) +
 					'</span><span>' +
 					esc( size ) +
-					'</span><span class="mn-mm-card-date">' +
+					'</span><span class="pnmf-card-date">' +
 					esc( item.date_human ) +
 					'</span></div>' +
-					'<div class="mn-mm-card-folder' +
+					'<div class="pnmf-card-folder' +
 					( item.folders.length ? '' : ' is-none' ) +
 					'" title="' +
 					esc( folderLabel ) +
@@ -595,7 +600,7 @@
 	 * ========================================================= */
 
 	function renderFoldersBar() {
-		const bar = $( '#mn-mm-folders' );
+		const bar = $( '#pnmf-folders' );
 		if ( ! bar ) {
 			return;
 		}
@@ -632,9 +637,9 @@
 			}
 		}
 
-		let html = '<nav class="mn-mm-crumbs">';
+		let html = '<nav class="pnmf-crumbs">';
 		html +=
-			'<button type="button" class="mn-mm-crumb' +
+			'<button type="button" class="pnmf-crumb' +
 			( currentId === 0 ? ' is-here' : '' ) +
 			'" data-crumb="0">' +
 			__( 'All media', 'plugnest-media-folders' ) +
@@ -642,7 +647,7 @@
 		crumbs.forEach( ( c, i ) => {
 			html += '<span class="sep">›</span>';
 			html +=
-				'<button type="button" class="mn-mm-crumb' +
+				'<button type="button" class="pnmf-crumb' +
 				( i === crumbs.length - 1 ? ' is-here' : '' ) +
 				'" data-crumb="' +
 				c.term_id +
@@ -652,10 +657,10 @@
 		} );
 		html += '</nav>';
 
-		html += '<div class="mn-mm-tiles">';
+		html += '<div class="pnmf-tiles">';
 		kids.forEach( ( f ) => {
 			html +=
-				'<button type="button" class="mn-mm-folder-tile' +
+				'<button type="button" class="pnmf-folder-tile' +
 				( f.color ? ' is-colored' : '' ) +
 				'" data-tile="' +
 				f.term_id +
@@ -665,23 +670,23 @@
 				( f.color ? ' style="' + colVars( f.color ) + '"' : '' ) +
 				'>' +
 				'<span class="dashicons dashicons-portfolio"></span>' +
-				'<span class="mn-mm-tile-name">' +
-				( f.star ? '<span class="mn-mm-tree-star">★</span>' : '' ) +
+				'<span class="pnmf-tile-name">' +
+				( f.star ? '<span class="pnmf-tree-star">★</span>' : '' ) +
 				esc( f.name ) +
 				'</span>' +
-				'<span class="mn-mm-tile-count">' +
+				'<span class="pnmf-tile-count">' +
 				esc( f.count || 0 ) +
 				'</span>' +
 				'</button>';
 		} );
 		html +=
-			'<button type="button" class="mn-mm-folder-tile is-add" data-tile-add="' +
+			'<button type="button" class="pnmf-folder-tile is-add" data-tile-add="' +
 			currentId +
 			'" title="' +
 			__( 'Add new folder', 'plugnest-media-folders' ) +
 			'">' +
 			'<span class="dashicons dashicons-plus-alt2"></span>' +
-			'<span class="mn-mm-tile-name">' +
+			'<span class="pnmf-tile-name">' +
 			__( 'Add', 'plugnest-media-folders' ) +
 			'</span>' +
 			'</button>';
@@ -720,10 +725,10 @@
 	}
 
 	function renderPagination() {
-		const box = $( '#mn-mm-pagination' );
+		const box = $( '#pnmf-pagination' );
 		if ( state.total <= state.perPage ) {
 			box.innerHTML =
-				'<span class="mn-mm-pagination-info">' +
+				'<span class="pnmf-pagination-info">' +
 				sprintf( __( '%d media in total', 'plugnest-media-folders' ), state.total ) +
 				'</span>';
 			return;
@@ -735,7 +740,7 @@
 			'"' +
 			( state.paged <= 1 ? ' disabled' : '' ) +
 			'>' + __( 'Previous', 'plugnest-media-folders' ) + '</button>' +
-			'<span class="mn-mm-pagination-info">' +
+			'<span class="pnmf-pagination-info">' +
 			sprintf( __( 'Page %1$d of %2$d, %3$d media in total', 'plugnest-media-folders' ), state.paged, state.pages, state.total ) +
 			'</span>' +
 			'<button type="button" class="button" data-page="' +
@@ -750,18 +755,18 @@
 	 * ========================================================= */
 
 	function renderBulkbar() {
-		const bar = $( '#mn-mm-bulkbar' );
+		const bar = $( '#pnmf-bulkbar' );
 		const count = state.selectAll ? state.total : state.selected.size;
 
 		bar.hidden = count === 0;
-		$( '#mn-mm-selected-count' ).textContent = count;
+		$( '#pnmf-selected-count' ).textContent = count;
 
 		if ( count === 0 ) {
 			return;
 		}
 
 		/* 重建資料夾下拉，但保留使用者已選的值。 */
-		const sel = $( '#mn-mm-bulk-folder' );
+		const sel = $( '#pnmf-bulk-folder' );
 		const previous = sel.value;
 		const options = [ '<option value="">' + __( '— Select folder —', 'plugnest-media-folders' ) + '</option>' ];
 		state.folders.forEach( ( f ) => {
@@ -794,7 +799,7 @@
 	function renderInspector( item ) {
 		/* 切換媒體前，先停掉上一個正在播放的音頻／視頻 */
 		document
-			.querySelectorAll( '#mn-mm-inspector-body audio, #mn-mm-inspector-body video' )
+			.querySelectorAll( '#pnmf-inspector-body audio, #pnmf-inspector-body video' )
 			.forEach( ( el ) => {
 				try {
 					el.pause();
@@ -804,8 +809,8 @@
 			document.exitFullscreen().catch( () => {} );
 		}
 
-		$( '#mn-mm-inspector-empty' ).hidden = true;
-		const body = $( '#mn-mm-inspector-body' );
+		$( '#pnmf-inspector-empty' ).hidden = true;
+		const body = $( '#pnmf-inspector-body' );
 		body.hidden = false;
 
 		/* 預覽：圖片顯示原圖；音頻／視頻給原生播放器（可播放／暫停、
@@ -813,19 +818,19 @@
 		let preview = '';
 		if ( item.type === 'audio' ) {
 			preview =
-				'<div class="mn-mm-inspector-preview mn-mm-preview-audio">' +
+				'<div class="pnmf-inspector-preview pnmf-preview-audio">' +
 				'<span class="dashicons ' + iconOf( item.type ) + '"></span>' +
 				'<audio controls preload="none" src="' + esc( item.url ) + '"></audio>' +
 				'</div>';
 		} else if ( item.type === 'video' ) {
 			preview =
-				'<div class="mn-mm-inspector-preview mn-mm-preview-video">' +
+				'<div class="pnmf-inspector-preview pnmf-preview-video">' +
 				'<video controls preload="metadata" src="' + esc( item.url ) + '"></video>' +
 				'</div>';
 		} else if ( item.thumb ) {
-			preview = '<div class="mn-mm-inspector-preview"><img src="' + esc( item.url ) + '" alt=""></div>';
+			preview = '<div class="pnmf-inspector-preview"><img src="' + esc( item.url ) + '" alt=""></div>';
 		} else {
-			preview = '<div class="mn-mm-inspector-preview"><span class="dashicons ' + iconOf( item.type ) + '"></span></div>';
+			preview = '<div class="pnmf-inspector-preview"><span class="dashicons ' + iconOf( item.type ) + '"></span></div>';
 		}
 
 		const folderOptions = [ '<option value="">' + __( '— Unassigned —', 'plugnest-media-folders' ) + '</option>' ]
@@ -846,7 +851,7 @@
 		const tagChips = state.tags
 			.map(
 				( t ) =>
-					'<span class="mn-mm-tag' +
+					'<span class="pnmf-tag' +
 					( item.tags.some( ( x ) => x.term_id === t.term_id ) ? ' is-active' : '' ) +
 					'" data-inspector-tag="' +
 					t.term_id +
@@ -865,40 +870,40 @@
 
 		body.innerHTML =
 			preview +
-			'<div class="mn-mm-inspector-file">' +
+			'<div class="pnmf-inspector-file">' +
 			esc( item.filename ) +
 			'</div>' +
-			'<div class="mn-mm-inspector-actions">' +
+			'<div class="pnmf-inspector-actions">' +
 			'<a class="button button-small" href="' +
 			esc( CFG.editUrl + '?post=' + item.id + '&action=edit' ) +
 			'" target="_blank" rel="noopener">' + __( 'Open in native editor', 'plugnest-media-folders' ) + '</a>' +
 			'<button type="button" class="button button-small" data-copy="' +
 			esc( item.url ) +
 			'">' + __( 'Copy URL', 'plugnest-media-folders' ) + '</button>' +
-			'<button type="button" class="button button-small mn-mm-danger-btn" data-inspector-delete="' +
+			'<button type="button" class="button button-small pnmf-danger-btn" data-inspector-delete="' +
 			esc( item.id ) +
 			'" title="' + __( 'Delete permanently (skips trash, cannot be undone)', 'plugnest-media-folders' ) + '">' + __( 'Delete permanently', 'plugnest-media-folders' ) + '</button>' +
 			'</div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Title', 'plugnest-media-folders' ) + '</label><input type="text" id="mn-mm-f-title" value="' +
+			'<div class="pnmf-field-row"><label>' + __( 'Title', 'plugnest-media-folders' ) + '</label><input type="text" id="pnmf-f-title" value="' +
 			esc( item.title ) +
 			'"></div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Alt text', 'plugnest-media-folders' ) + '</label><input type="text" id="mn-mm-f-alt" value="' +
+			'<div class="pnmf-field-row"><label>' + __( 'Alt text', 'plugnest-media-folders' ) + '</label><input type="text" id="pnmf-f-alt" value="' +
 			esc( item.alt ) +
 			'"></div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Caption', 'plugnest-media-folders' ) + '</label><input type="text" id="mn-mm-f-caption" value="' +
+			'<div class="pnmf-field-row"><label>' + __( 'Caption', 'plugnest-media-folders' ) + '</label><input type="text" id="pnmf-f-caption" value="' +
 			esc( item.caption ) +
 			'"></div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Description', 'plugnest-media-folders' ) + '</label><textarea id="mn-mm-f-desc">' +
+			'<div class="pnmf-field-row"><label>' + __( 'Description', 'plugnest-media-folders' ) + '</label><textarea id="pnmf-f-desc">' +
 			esc( item.description ) +
 			'</textarea></div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Folder', 'plugnest-media-folders' ) + '</label><select id="mn-mm-f-folder">' +
+			'<div class="pnmf-field-row"><label>' + __( 'Folder', 'plugnest-media-folders' ) + '</label><select id="pnmf-f-folder">' +
 			folderOptions +
 			'</select></div>' +
-			'<div class="mn-mm-field-row"><label>' + __( 'Tags', 'plugnest-media-folders' ) + '</label><div class="mn-mm-tags">' +
-			( tagChips || '<span class="mn-mm-hint">' + __( 'No tags yet.', 'plugnest-media-folders' ) + '</span>' ) +
+			'<div class="pnmf-field-row"><label>' + __( 'Tags', 'plugnest-media-folders' ) + '</label><div class="pnmf-tags">' +
+			( tagChips || '<span class="pnmf-hint">' + __( 'No tags yet.', 'plugnest-media-folders' ) + '</span>' ) +
 			'</div></div>' +
-			'<button type="button" class="button button-primary" id="mn-mm-save-item">' + __( 'Save changes', 'plugnest-media-folders' ) + '</button>' +
-			'<ul class="mn-mm-meta-list">' +
+			'<button type="button" class="button button-primary" id="pnmf-save-item">' + __( 'Save changes', 'plugnest-media-folders' ) + '</button>' +
+			'<ul class="pnmf-meta-list">' +
 			'<li>' + __( 'File size: ', 'plugnest-media-folders' ) + '<strong>' +
 			esc( item.filesize_human ) +
 			'</strong></li>' +
@@ -927,14 +932,14 @@
 			return;
 		}
 
-		const folderVal = $( '#mn-mm-f-folder' ).value;
+		const folderVal = $( '#pnmf-f-folder' ).value;
 
 		const payload = {
 			id: state.current.id,
-			title: $( '#mn-mm-f-title' ).value,
-			alt: $( '#mn-mm-f-alt' ).value,
-			caption: $( '#mn-mm-f-caption' ).value,
-			description: $( '#mn-mm-f-desc' ).value,
+			title: $( '#pnmf-f-title' ).value,
+			alt: $( '#pnmf-f-alt' ).value,
+			caption: $( '#pnmf-f-caption' ).value,
+			description: $( '#pnmf-f-desc' ).value,
 			folder_id: folderVal === '' ? 0 : folderVal,
 			tag_ids: state.currentTags || [],
 		};
@@ -969,9 +974,9 @@
 			marqueeCancel();
 		}
 
-		const grid = $( '#mn-mm-grid' );
+		const grid = $( '#pnmf-grid' );
 		grid.innerHTML = Array.from( { length: 12 } )
-			.map( () => '<div class="mn-mm-skeleton"></div>' )
+			.map( () => '<div class="pnmf-skeleton"></div>' )
 			.join( '' );
 
 		const req   = ++mediaReq;
@@ -1001,7 +1006,7 @@
 			if ( req !== mediaReq ) {
 				return;
 			}
-			grid.innerHTML = '<div class="mn-mm-empty">' + esc( e.message ) + '</div>';
+			grid.innerHTML = '<div class="pnmf-empty">' + esc( e.message ) + '</div>';
 		}
 	}
 
@@ -1087,11 +1092,11 @@
 	let suppressClickUntil = 0;
 
 	function marqueeBox() {
-		let box = document.getElementById( 'mn-mm-marquee' );
+		let box = document.getElementById( 'pnmf-marquee' );
 		if ( ! box ) {
 			box = document.createElement( 'div' );
-			box.id = 'mn-mm-marquee';
-			box.className = 'mn-mm-marquee';
+			box.id = 'pnmf-marquee';
+			box.className = 'pnmf-marquee';
 			box.hidden = true;
 			document.body.appendChild( box );
 		}
@@ -1132,7 +1137,7 @@
 		};
 		marqueeResync();
 
-		document.body.classList.add( 'mn-mm-marquee-on' );
+		document.body.classList.add( 'pnmf-marquee-on' );
 		marqueeBox().hidden = false;
 
 		if ( ! marqueeRaf ) {
@@ -1149,7 +1154,7 @@
 	 */
 	function marqueeResync() {
 		const m = marquee;
-		const grid = $( '#mn-mm-grid' );
+		const grid = $( '#pnmf-grid' );
 		const g = grid.getBoundingClientRect();
 		const sx = window.scrollX;
 		const sy = window.scrollY;
@@ -1162,7 +1167,7 @@
 
 		m.gridTop = top;
 		m.gridLeft = left;
-		m.cards = Array.from( grid.querySelectorAll( '.mn-mm-card' ) ).map( ( el ) => {
+		m.cards = Array.from( grid.querySelectorAll( '.pnmf-card' ) ).map( ( el ) => {
 			const r = el.getBoundingClientRect();
 			return {
 				el: el,
@@ -1246,8 +1251,8 @@
 
 		/* 「全選」模式下累加框選，選取範圍不變，直接沿用總數。 */
 		if ( m.wasSelectAll && m.additive ) {
-			$( '#mn-mm-bulkbar' ).hidden = state.total === 0;
-			$( '#mn-mm-selected-count' ).textContent = state.total;
+			$( '#pnmf-bulkbar' ).hidden = state.total === 0;
+			$( '#pnmf-selected-count' ).textContent = state.total;
 			return;
 		}
 
@@ -1264,15 +1269,15 @@
 			}
 		} );
 
-		$( '#mn-mm-bulkbar' ).hidden = count === 0;
-		$( '#mn-mm-selected-count' ).textContent = count;
+		$( '#pnmf-bulkbar' ).hidden = count === 0;
+		$( '#pnmf-selected-count' ).textContent = count;
 	}
 
 	function marqueeEnd() {
 		const m = marquee;
 		marquee = null;
 
-		document.body.classList.remove( 'mn-mm-marquee-on' );
+		document.body.classList.remove( 'pnmf-marquee-on' );
 		marqueeBox().hidden = true;
 		restoreDraggable( m );
 		suppressClickUntil = Date.now() + 300;
@@ -1309,7 +1314,7 @@
 		const m = marquee;
 		marquee = null;
 
-		document.body.classList.remove( 'mn-mm-marquee-on' );
+		document.body.classList.remove( 'pnmf-marquee-on' );
 		marqueeBox().hidden = true;
 
 		m.cards.forEach( ( c ) => c.el.classList.toggle( 'is-selected', m.base.has( c.id ) ) );
@@ -1340,7 +1345,7 @@
 			let data;
 
 			if ( kind === 'folder-move' || kind === 'folder-add' ) {
-				const folderId = $( '#mn-mm-bulk-folder' ).value;
+				const folderId = $( '#pnmf-bulk-folder' ).value;
 				if ( ! folderId ) {
 					toast( __( 'Select a target folder first.', 'plugnest-media-folders' ), 'error' );
 					return;
@@ -1372,7 +1377,7 @@
 
 				data = await api( 'media_delete', base );
 			} else if ( kind === 'tag-add' || kind === 'tag-remove' ) {
-				const names = $( '#mn-mm-bulk-tags' ).value.trim();
+				const names = $( '#pnmf-bulk-tags' ).value.trim();
 				if ( ! names ) {
 					toast( __( 'Enter tag names.', 'plugnest-media-folders' ), 'error' );
 					return;
@@ -1386,10 +1391,10 @@
 				);
 			} else if ( kind === 'bulk-edit' ) {
 				const fields = {
-					title: $( '#mn-mm-edit-title' ).value,
-					alt: $( '#mn-mm-edit-alt' ).value,
-					caption: $( '#mn-mm-edit-caption' ).value,
-					description: $( '#mn-mm-edit-desc' ).value,
+					title: $( '#pnmf-edit-title' ).value,
+					alt: $( '#pnmf-edit-alt' ).value,
+					caption: $( '#pnmf-edit-caption' ).value,
+					description: $( '#pnmf-edit-desc' ).value,
 				};
 				if ( ! fields.title && ! fields.alt && ! fields.caption && ! fields.description ) {
 					toast( __( 'Fill in at least one field.', 'plugnest-media-folders' ), 'error' );
@@ -1399,7 +1404,7 @@
 					'bulk_edit',
 					Object.assign( {}, base, {
 						fields,
-						mode: $( '#mn-mm-edit-mode' ).value,
+						mode: $( '#pnmf-edit-mode' ).value,
 					} )
 				);
 			}
@@ -1431,15 +1436,15 @@
 	const COLOR_SWATCHES = [ '', '#e65054', '#dba617', '#00a32a', '#2271b1', '#7a2ee6', '#f06fa0', '#646970' ];
 
 	function openColorPop( anchor ) {
-		let pop = document.getElementById( 'mn-mm-color-pop' );
+		let pop = document.getElementById( 'pnmf-color-pop' );
 		if ( ! pop ) {
 			pop = document.createElement( 'div' );
-			pop.id = 'mn-mm-color-pop';
-			pop.className = 'mn-mm-color-pop';
+			pop.id = 'pnmf-color-pop';
+			pop.className = 'pnmf-color-pop';
 			document.body.appendChild( pop );
 
 			document.addEventListener( 'mousedown', ( e ) => {
-				if ( ! pop.hidden && ! e.target.closest( '#mn-mm-color-pop' ) && ! e.target.closest( '[data-color]' ) ) {
+				if ( ! pop.hidden && ! e.target.closest( '#pnmf-color-pop' ) && ! e.target.closest( '[data-color]' ) ) {
 					pop.hidden = true;
 				}
 			} );
@@ -1453,13 +1458,13 @@
 		const termId  = parseInt( anchor.dataset.color, 10 );
 		const current = anchor.dataset.current || '';
 		pop.innerHTML =
-			'<div class="mn-mm-color-pop-head">' +
-			'<span class="mn-mm-color-pop-title">' + __( 'Folder color', 'plugnest-media-folders' ) + '</span>' +
-			'<button type="button" class="mn-mm-color-pop-close" title="' + __( 'Close', 'plugnest-media-folders' ) + '">✕</button>' +
+			'<div class="pnmf-color-pop-head">' +
+			'<span class="pnmf-color-pop-title">' + __( 'Folder color', 'plugnest-media-folders' ) + '</span>' +
+			'<button type="button" class="pnmf-color-pop-close" title="' + __( 'Close', 'plugnest-media-folders' ) + '">✕</button>' +
 			'</div>' +
-			'<div class="mn-mm-color-swatches">' +
+			'<div class="pnmf-color-swatches">' +
 			COLOR_SWATCHES.map( ( c ) =>
-				'<button type="button" class="mn-mm-color-swatch' +
+				'<button type="button" class="pnmf-color-swatch' +
 				( c === current ? ' is-current' : '' ) +
 				( '' === c ? ' is-none' : '' ) +
 				'" style="' + ( c ? 'background:' + c : '' ) + '" data-swatch="' +
@@ -1467,7 +1472,7 @@
 				'" title="' + ( c ? c : __( 'No color', 'plugnest-media-folders' ) ) + '"></button>'
 			).join( '' ) +
 			'</div>' +
-			'<label class="mn-mm-color-custom">' +
+			'<label class="pnmf-color-custom">' +
 			__( 'Custom', 'plugnest-media-folders' ) +
 			' <input type="color" value="' + ( current || '#2271b1' ) + '">' +
 			'</label>';
@@ -1475,7 +1480,7 @@
 		const close = () => {
 			pop.hidden = true;
 		};
-		pop.querySelector( '.mn-mm-color-pop-close' ).addEventListener( 'click', close );
+		pop.querySelector( '.pnmf-color-pop-close' ).addEventListener( 'click', close );
 
 		const apply = async ( color ) => {
 			close();
@@ -1538,8 +1543,8 @@
 		const count = f ? ( f.count || 0 ) : 0;
 
 		/* 深刪除對話框為 Pro 功能：有媒體且 Pro 才走。 */
-		if ( CFG.pro && count > 0 && window.MN_MM_Pro ) {
-			window.MN_MM_Pro.deepDelete( termId, f ? f.name : '', count );
+		if ( CFG.pro && count > 0 && window.PNMF_Pro ) {
+			window.PNMF_Pro.deepDelete( termId, f ? f.name : '', count );
 			return;
 		}
 
@@ -1579,17 +1584,17 @@
 	 * ========================================================= */
 
 	function renderRules() {
-		const box = $( '#mn-mm-rules' );
+		const box = $( '#pnmf-rules' );
 
 		const pathOptions = state.folderPaths
 			.map( ( p ) => '<option value="' + esc( p.path ) + '">' + esc( p.path ) + '</option>' )
 			.join( '' );
 
-		const datalist = '<datalist id="mn-mm-folder-paths">' + pathOptions + '</datalist>';
+		const datalist = '<datalist id="pnmf-folder-paths">' + pathOptions + '</datalist>';
 
 		if ( ! state.rules.length ) {
 			box.innerHTML =
-				'<div class="mn-mm-empty">' + __( 'No rules yet. Click "Add rule" below to start.', 'plugnest-media-folders' ) + '</div>' + datalist;
+				'<div class="pnmf-empty">' + __( 'No rules yet. Click "Add rule" below to start.', 'plugnest-media-folders' ) + '</div>' + datalist;
 			return;
 		}
 
@@ -1599,13 +1604,13 @@
 				const m = rule.match || {};
 
 				return (
-					'<div class="mn-mm-rule-card' +
+					'<div class="pnmf-rule-card' +
 					( rule.enabled ? '' : ' is-disabled' ) +
 					'" data-index="' +
 					idx +
 					'">' +
-					'<div class="mn-mm-rule-head">' +
-					'<label class="mn-mm-check"><input type="checkbox" data-field="enabled"' +
+					'<div class="pnmf-rule-head">' +
+					'<label class="pnmf-check"><input type="checkbox" data-field="enabled"' +
 					( rule.enabled ? ' checked' : '' ) +
 					'>' + __( 'Enable', 'plugnest-media-folders' ) + '</label>' +
 					'<input type="text" data-field="label" value="' +
@@ -1615,7 +1620,7 @@
 					'<button type="button" class="button button-small" data-rule-move="down">↓</button>' +
 					'<button type="button" class="button button-small" data-rule-delete>' + __( 'Delete', 'plugnest-media-folders' ) + '</button>' +
 					'</div>' +
-					'<div class="mn-mm-rule-grid">' +
+					'<div class="pnmf-rule-grid">' +
 					'<label>' + __( 'Filename contains (comma-separated, any)', 'plugnest-media-folders' ) + '<input type="text" data-match="filename_contains" value="' +
 					esc( m.filename_contains || '' ) +
 					'" placeholder="' + __( 'e.g. asmr,drama', 'plugnest-media-folders' ) + '"></label>' +
@@ -1639,17 +1644,17 @@
 					esc( m.year || 0 ) +
 					'"></label>' +
 					'</div>' +
-					'<div class="mn-mm-rule-grid">' +
+					'<div class="pnmf-rule-grid">' +
 					'<label>' + __( 'Target folder (use / for nesting; folders are created automatically)', 'plugnest-media-folders' ) +
-					'<input type="text" data-field="target_folder" list="mn-mm-folder-paths" value="' +
+					'<input type="text" data-field="target_folder" list="pnmf-folder-paths" value="' +
 					esc( rule.target_folder || '' ) +
 					'" placeholder="' + __( 'e.g. Videos/ASMR', 'plugnest-media-folders' ) + '"></label>' +
 					'<label>' + __( 'Also add tags (comma-separated, optional)', 'plugnest-media-folders' ) + '<input type="text" data-field="add_tags" value="' +
 					esc( ( rule.add_tags || [] ).join( ',' ) ) +
 					'"></label>' +
 					'</div>' +
-					'<div class="mn-mm-rule-foot">' +
-					'<label class="mn-mm-check"><input type="checkbox" data-field="only_unassigned"' +
+					'<div class="pnmf-rule-foot">' +
+					'<label class="pnmf-check"><input type="checkbox" data-field="only_unassigned"' +
 					( rule.only_unassigned ? ' checked' : '' ) +
 					'>' + __( 'Only process unassigned media (recommended)', 'plugnest-media-folders' ) + '</label>' +
 					'</div>' +
@@ -1675,7 +1680,7 @@
 	 * 把畫面上的規則讀回物件。
 	 */
 	function collectRules() {
-		const cards = document.querySelectorAll( '.mn-mm-rule-card' );
+		const cards = document.querySelectorAll( '.pnmf-rule-card' );
 		const rules = [];
 
 		cards.forEach( ( card ) => {
@@ -1716,7 +1721,7 @@
 	}
 
 	function autoScope() {
-		const picked = document.querySelector( 'input[name="mn-mm-auto-scope"]:checked' );
+		const picked = document.querySelector( 'input[name="pnmf-auto-scope"]:checked' );
 		const value = picked ? picked.value : 'all';
 
 		const scope = {
@@ -1766,22 +1771,22 @@
 	}
 
 	function renderPreview( data ) {
-		const box = $( '#mn-mm-preview' );
+		const box = $( '#pnmf-preview' );
 		box.hidden = false;
 
 		const rows = data.rules
 			.filter( ( r ) => r.count > 0 || r.skipped > 0 )
 			.map( ( r ) => {
 				const samples = r.samples.length
-					? '<div class="mn-mm-preview-samples">' + __( 'Examples:', 'plugnest-media-folders' ) + ' ' +
+					? '<div class="pnmf-preview-samples">' + __( 'Examples:', 'plugnest-media-folders' ) + ' ' +
 					  r.samples.map( ( s ) => esc( s.filename ) ).join( ', ' ) +
 					  '</div>'
 					: '';
 
 				return (
-					'<div class="mn-mm-preview-row"><span>' +
+					'<div class="pnmf-preview-row"><span>' +
 					esc( r.label ) +
-					' → <span class="mn-mm-preview-target">' +
+					' → <span class="pnmf-preview-target">' +
 					esc( r.target ) +
 					'</span></span><span><strong>' +
 					esc( r.count ) +
@@ -1794,18 +1799,18 @@
 			.join( '' );
 
 		box.innerHTML =
-			'<div class="mn-mm-preview-head">' + __( 'Dry run (nothing has been saved yet)', 'plugnest-media-folders' ) + '</div>' +
-			( rows || '<div class="mn-mm-preview-row">' + __( 'No media matches the current rules.', 'plugnest-media-folders' ) + '</div>' ) +
-			'<div class="mn-mm-preview-row"><span>' + __( 'Media in scope', 'plugnest-media-folders' ) + '</span><span><strong>' +
+			'<div class="pnmf-preview-head">' + __( 'Dry run (nothing has been saved yet)', 'plugnest-media-folders' ) + '</div>' +
+			( rows || '<div class="pnmf-preview-row">' + __( 'No media matches the current rules.', 'plugnest-media-folders' ) + '</div>' ) +
+			'<div class="pnmf-preview-row"><span>' + __( 'Media in scope', 'plugnest-media-folders' ) + '</span><span><strong>' +
 			esc( data.candidates ) +
 			'</strong></span></div>' +
-			'<div class="mn-mm-preview-row"><span>' + __( 'No rule matched', 'plugnest-media-folders' ) + '</span><span><strong>' +
+			'<div class="pnmf-preview-row"><span>' + __( 'No rule matched', 'plugnest-media-folders' ) + '</span><span><strong>' +
 			esc( data.unmatched ) +
 			'</strong></span></div>' +
-			'<div class="mn-mm-preview-row"><span>' + __( 'Skipped (already assigned)', 'plugnest-media-folders' ) + '</span><span><strong>' +
+			'<div class="pnmf-preview-row"><span>' + __( 'Skipped (already assigned)', 'plugnest-media-folders' ) + '</span><span><strong>' +
 			esc( data.skipped ) +
 			'</strong></span></div>' +
-			'<div class="mn-mm-preview-row"><span>' + __( 'Will be assigned', 'plugnest-media-folders' ) + '</span><span><strong>' +
+			'<div class="pnmf-preview-row"><span>' + __( 'Will be assigned', 'plugnest-media-folders' ) + '</span><span><strong>' +
 			esc( data.will_apply ) +
 			'</strong> ' + __( 'items', 'plugnest-media-folders' ) + '</span></div>';
 	}
@@ -1864,8 +1869,8 @@
 					sprintf( __( 'Auto-assign complete: %1$d assigned, %2$d skipped. Undo it from Activity Log if needed.', 'plugnest-media-folders' ), data.applied, data.skipped ),
 					'ok'
 				);
-				$( '#mn-mm-preview' ).hidden = true;
-				closeModal( '#mn-mm-modal-auto' );
+				$( '#pnmf-preview' ).hidden = true;
+				closeModal( '#pnmf-modal-auto' );
 				state.selected.clear();
 				await refresh( true );
 			}
@@ -1920,47 +1925,47 @@
 	 * ========================================================= */
 
 	async function openLogs() {
-		openModal( '#mn-mm-modal-logs' );
-		const box = $( '#mn-mm-log-list' );
-		box.innerHTML = '<div class="mn-mm-loading">' + __( 'Loading…', 'plugnest-media-folders' ) + '</div>';
+		openModal( '#pnmf-modal-logs' );
+		const box = $( '#pnmf-log-list' );
+		box.innerHTML = '<div class="pnmf-loading">' + __( 'Loading…', 'plugnest-media-folders' ) + '</div>';
 
 		try {
 			const data = await api( 'log_list', { limit: 40 } );
 			const logs = data.logs || [];
 
 			if ( ! logs.length ) {
-				box.innerHTML = '<div class="mn-mm-empty">' + __( 'No activity yet.', 'plugnest-media-folders' ) + '</div>';
+				box.innerHTML = '<div class="pnmf-empty">' + __( 'No activity yet.', 'plugnest-media-folders' ) + '</div>';
 				return;
 			}
 
 			box.innerHTML = logs
 				.map(
 					( log ) =>
-						'<div class="mn-mm-log-item">' +
-						'<div class="mn-mm-log-main">' +
-						'<div class="mn-mm-log-action">' +
+						'<div class="pnmf-log-item">' +
+						'<div class="pnmf-log-main">' +
+						'<div class="pnmf-log-action">' +
 						esc( log.label ) +
 						'　<span style="font-weight:400;color:#646970;">' +
 						sprintf( __( '%d media', 'plugnest-media-folders' ), esc( log.object_count ) ) +
 						'</span></div>' +
-						'<div class="mn-mm-log-meta">' +
+						'<div class="pnmf-log-meta">' +
 						esc( log.created_at ) +
 						'　·　' +
 						esc( log.user_name ) +
 						'</div>' +
 						'</div>' +
 						( parseInt( log.undone, 10 ) === 1
-							? '<span class="mn-mm-log-undone">' + __( 'Undone', 'plugnest-media-folders' ) + '</span>'
+							? '<span class="pnmf-log-undone">' + __( 'Undone', 'plugnest-media-folders' ) + '</span>'
 							: log.undoable
 							? '<button type="button" class="button button-small" data-undo="' +
 							  log.id +
 							  '">' + __( 'Undo', 'plugnest-media-folders' ) + '</button>'
-							: '<span class="mn-mm-log-undone">' + __( 'Cannot undo', 'plugnest-media-folders' ) + '</span>' ) +
+							: '<span class="pnmf-log-undone">' + __( 'Cannot undo', 'plugnest-media-folders' ) + '</span>' ) +
 						'</div>'
 				)
 				.join( '' );
 		} catch ( e ) {
-			box.innerHTML = '<div class="mn-mm-empty">' + esc( e.message ) + '</div>';
+			box.innerHTML = '<div class="pnmf-empty">' + esc( e.message ) + '</div>';
 		}
 	}
 
@@ -2000,15 +2005,15 @@
 	 * Pro 購買引導（免費版點鎖定功能時彈出）。
 	 */
 	function openUpsell() {
-		const box = $( '#mn-mm-upsell-features' );
+		const box = $( '#pnmf-upsell-features' );
 		if ( box && ! box.dataset.filled ) {
 			box.innerHTML = CFG.proFeatures
 				.map( ( f ) => '<li>' + esc( f ) + '</li>' )
 				.join( '' );
 			box.dataset.filled = '1';
 		}
-		$( '#mn-mm-upsell-buy' ).href = CFG.buyUrl;
-		openModal( '#mn-mm-modal-upsell' );
+		$( '#pnmf-upsell-buy' ).href = CFG.buyUrl;
+		openModal( '#pnmf-modal-upsell' );
 	}
 
 	/* =========================================================
@@ -2017,14 +2022,14 @@
 
 	function bindEvents() {
 		/* ---------- Pro 鎖定攔截（免費版：點 Pro 功能 → 購買引導）----------
-		 * 捕獲階段攔截 .mn-mm-pro-locked，擋在功能 handler 之前。 */
+		 * 捕獲階段攔截 .pnmf-pro-locked，擋在功能 handler 之前。 */
 		document.addEventListener(
 			'click',
 			( e ) => {
 				if ( CFG.pro ) {
 					return;
 				}
-				const locked = e.target.closest( '.mn-mm-pro-locked' );
+				const locked = e.target.closest( '.pnmf-pro-locked' );
 				if ( locked ) {
 					e.preventDefault();
 					e.stopImmediatePropagation();
@@ -2035,7 +2040,7 @@
 		);
 
 		/* ---------- 資料夾樹 ---------- */
-		$( '#mn-mm-tree' ).addEventListener( 'click', async ( e ) => {
+		$( '#pnmf-tree' ).addEventListener( 'click', async ( e ) => {
 			const toggle = e.target.closest( '[data-toggle]' );
 			if ( toggle ) {
 				const id = parseInt( toggle.dataset.toggle, 10 );
@@ -2087,11 +2092,11 @@
 			/* 資料夾存取角色限制 */
 			const rolesBtn = e.target.closest( '[data-roles]' );
 			if ( rolesBtn ) {
-				if ( window.MN_MM_Pro ) { window.MN_MM_Pro.openRoles( parseInt( rolesBtn.dataset.roles, 10 ) ); } else { openUpsell(); }
+				if ( window.PNMF_Pro ) { window.PNMF_Pro.openRoles( parseInt( rolesBtn.dataset.roles, 10 ) ); } else { openUpsell(); }
 				return;
 			}
 
-			const row = e.target.closest( '.mn-mm-tree-item' );
+			const row = e.target.closest( '.pnmf-tree-item' );
 			if ( ! row ) {
 				return;
 			}
@@ -2129,17 +2134,17 @@
 			}
 		}
 
-		$( '#mn-mm-tree' ).addEventListener( 'dragover', ( e ) => {
+		$( '#pnmf-tree' ).addEventListener( 'dragover', ( e ) => {
 			if ( isFileDrag( e ) ) {
 				/* 檔案拖到資料夾列 → 該列即上傳目標，亮起來。 */
-				const fRow = e.target.closest( '.mn-mm-tree-item[data-term]' );
+				const fRow = e.target.closest( '.pnmf-tree-item[data-term]' );
 				if ( fRow ) {
 					e.preventDefault();
 					if ( e.dataTransfer ) {
 						e.dataTransfer.dropEffect = 'copy';
 					}
 					document
-						.querySelectorAll( '#mn-mm-tree .is-drop-target' )
+						.querySelectorAll( '#pnmf-tree .is-drop-target' )
 						.forEach( ( r ) => {
 							if ( r !== fRow ) {
 								r.classList.remove( 'is-drop-target' );
@@ -2151,7 +2156,7 @@
 			}
 
 			const row = e.target.closest(
-				'.mn-mm-tree-item[data-term], .mn-mm-tree-item[data-key="none"]'
+				'.pnmf-tree-item[data-term], .pnmf-tree-item[data-key="none"]'
 			);
 			if ( ! row ) {
 				return;
@@ -2162,7 +2167,7 @@
 			}
 			/* 只亮目前這一列，離開的列要清掉 */
 			document
-				.querySelectorAll( '#mn-mm-tree .is-drop-target' )
+				.querySelectorAll( '#pnmf-tree .is-drop-target' )
 				.forEach( ( r ) => {
 					if ( r !== row ) {
 						r.classList.remove( 'is-drop-target' );
@@ -2171,25 +2176,25 @@
 			row.classList.add( 'is-drop-target' );
 		} );
 
-		$( '#mn-mm-tree' ).addEventListener( 'dragleave', ( e ) => {
+		$( '#pnmf-tree' ).addEventListener( 'dragleave', ( e ) => {
 			if ( isFileDrag( e ) ) {
 				return;
 			}
 			const row = e.target.closest(
-				'.mn-mm-tree-item[data-term], .mn-mm-tree-item[data-key="none"]'
+				'.pnmf-tree-item[data-term], .pnmf-tree-item[data-key="none"]'
 			);
 			if ( row ) {
 				row.classList.remove( 'is-drop-target' );
 			}
 		} );
 
-		$( '#mn-mm-tree' ).addEventListener( 'drop', async ( e ) => {
+		$( '#pnmf-tree' ).addEventListener( 'drop', async ( e ) => {
 			const isFile = isFileDrag( e );
 
 			/* 檔案拖到特定資料夾列上放開 → 標記 override，檔案會傳進該資料夾。
 			 * 不 stopPropagation：事件續往上冒給 plupload 的整頁 dropzone 處理。 */
 			if ( isFile ) {
-				const fRow = e.target.closest( '.mn-mm-tree-item[data-term]' );
+				const fRow = e.target.closest( '.pnmf-tree-item[data-term]' );
 				if ( fRow ) {
 					e.preventDefault();
 					state.uploadFolderOverride = parseInt( fRow.dataset.term, 10 ) || 0;
@@ -2199,7 +2204,7 @@
 			}
 
 			const row = e.target.closest(
-				'.mn-mm-tree-item[data-term], .mn-mm-tree-item[data-key="none"]'
+				'.pnmf-tree-item[data-term], .pnmf-tree-item[data-key="none"]'
 			);
 			if ( ! row ) {
 				return;
@@ -2240,7 +2245,7 @@
 		} );
 
 		/* ---------- 資料夾磚（中間面板） ---------- */
-		const foldersBar = $( '#mn-mm-folders' );
+		const foldersBar = $( '#pnmf-folders' );
 		if ( foldersBar ) {
 			foldersBar.addEventListener( 'click', ( e ) => {
 				const crumb = e.target.closest( '[data-crumb]' );
@@ -2312,7 +2317,7 @@
 		}
 
 		/* ---------- 標籤篩選 ---------- */
-		$( '#mn-mm-tags' ).addEventListener( 'click', ( e ) => {
+		$( '#pnmf-tags' ).addEventListener( 'click', ( e ) => {
 			const tag = e.target.closest( '[data-tag]' );
 			if ( ! tag ) {
 				return;
@@ -2330,7 +2335,7 @@
 		} );
 
 		/* ---------- 工具列 ---------- */
-		$( '#mn-mm-search' ).addEventListener(
+		$( '#pnmf-search' ).addEventListener(
 			'input',
 			debounce( ( e ) => {
 				state.search = e.target.value;
@@ -2339,32 +2344,32 @@
 			}, 350 )
 		);
 
-		$( '#mn-mm-type' ).addEventListener( 'change', ( e ) => {
+		$( '#pnmf-type' ).addEventListener( 'change', ( e ) => {
 			state.mimeGroup = e.target.value;
 			state.paged = 1;
 			loadMedia();
 		} );
 
-		$( '#mn-mm-usage' ).addEventListener( 'change', ( e ) => {
+		$( '#pnmf-usage' ).addEventListener( 'change', ( e ) => {
 			state.usage = e.target.value;
 			state.paged = 1;
 			loadMedia();
 		} );
 
-		$( '#mn-mm-sort' ).addEventListener( 'change', async ( e ) => {
+		$( '#pnmf-sort' ).addEventListener( 'change', async ( e ) => {
 			state.sort = e.target.value;
 			state.paged = 1;
 
 			/* 尺寸排序：索引未建滿時先分批補建（有進度提示）。 */
 			if ( 0 === state.sort.indexOf( 'size-' ) && ( state.stats.filesize_missing || 0 ) > 0 ) {
 				try {
-					let offset = 0;
+					/* 不傳 offset：後端每次都取「尚未建索引」的最前面一批，
+					 * 結果集會自己縮小；再累加位移反而會跳過一大段。 */
 					let done = false;
 					let guard = 0;
 					while ( ! done && guard < 2000 ) {
 						guard++;
-						const d = await api( 'filesize_build', { offset, limit: 300 } );
-						offset = d.processed;
+						const d = await api( 'filesize_build', { limit: 300 } );
 						done = d.done;
 						progress(
 							true,
@@ -2385,7 +2390,7 @@
 			loadMedia();
 		} );
 
-		$( '#mn-mm-include-children' ).addEventListener( 'change', ( e ) => {
+		$( '#pnmf-include-children' ).addEventListener( 'change', ( e ) => {
 			state.includeChildren = e.target.checked;
 			state.paged = 1;
 			loadMedia();
@@ -2393,12 +2398,12 @@
 
 		/* ---------- 檢視模式切換（縮略圖 / 列表） ---------- */
 		function applyView() {
-			const grid = $( '#mn-mm-grid' );
+			const grid = $( '#pnmf-grid' );
 			if ( grid ) {
-				grid.classList.toggle( 'mn-mm-list', state.view === 'list' );
+				grid.classList.toggle( 'pnmf-list', state.view === 'list' );
 			}
-			const gb = $( '#mn-mm-view-grid' );
-			const lb = $( '#mn-mm-view-list' );
+			const gb = $( '#pnmf-view-grid' );
+			const lb = $( '#pnmf-view-list' );
 			if ( gb ) {
 				gb.classList.toggle( 'is-active', state.view !== 'list' );
 			}
@@ -2407,15 +2412,15 @@
 			}
 		}
 
-		$( '#mn-mm-view-grid' ).addEventListener( 'click', () => {
+		$( '#pnmf-view-grid' ).addEventListener( 'click', () => {
 			state.view = 'grid';
-			localStorage.setItem( 'mn-mm-view', 'grid' );
+			localStorage.setItem( 'pnmf-view', 'grid' );
 			applyView();
 		} );
 
-		$( '#mn-mm-view-list' ).addEventListener( 'click', () => {
+		$( '#pnmf-view-list' ).addEventListener( 'click', () => {
 			state.view = 'list';
-			localStorage.setItem( 'mn-mm-view', 'list' );
+			localStorage.setItem( 'pnmf-view', 'list' );
 			applyView();
 		} );
 
@@ -2447,8 +2452,8 @@
 			return ok;
 		}
 
-		$( '#mn-mm-grid' ).addEventListener( 'click', async ( e ) => {
-			const btn = e.target.closest( '.mn-mm-card-copy' );
+		$( '#pnmf-grid' ).addEventListener( 'click', async ( e ) => {
+			const btn = e.target.closest( '.pnmf-card-copy' );
 			if ( ! btn ) {
 				return;
 			}
@@ -2459,25 +2464,25 @@
 		} );
 
 		/* ---------- 網格：選取與詳情 ---------- */
-		$( '#mn-mm-grid' ).addEventListener( 'click', ( e ) => {
+		$( '#pnmf-grid' ).addEventListener( 'click', ( e ) => {
 			/* 剛結束框選 → 忽略瀏覽器補上的這次 click */
 			if ( Date.now() < suppressClickUntil ) {
 				return;
 			}
 
 			/* 複製網址按鈕有自己的處理器 */
-			if ( e.target.closest( '.mn-mm-card-copy' ) ) {
+			if ( e.target.closest( '.pnmf-card-copy' ) ) {
 				return;
 			}
 
-			const card = e.target.closest( '.mn-mm-card' );
+			const card = e.target.closest( '.pnmf-card' );
 			if ( ! card ) {
 				return;
 			}
 			const id = parseInt( card.dataset.id, 10 );
 
 			/* 勾選框、或按住 Ctrl/Cmd/Shift → 切換選取 */
-			if ( e.target.closest( '.mn-mm-card-check' ) || e.ctrlKey || e.metaKey || e.shiftKey ) {
+			if ( e.target.closest( '.pnmf-card-check' ) || e.ctrlKey || e.metaKey || e.shiftKey ) {
 				toggleSelection( id, card );
 				return;
 			}
@@ -2487,18 +2492,18 @@
 		} );
 
 		/* ---------- 網格：拉框選取 ---------- */
-		$( '#mn-mm-grid' ).addEventListener( 'mousedown', ( e ) => {
+		$( '#pnmf-grid' ).addEventListener( 'mousedown', ( e ) => {
 			if ( e.button !== 0 ) {
 				return;
 			}
 
 			/* 勾選框與複製鈕自己會處理，不要搶手勢 */
-			if ( e.target.closest( '.mn-mm-card-check' ) || e.target.closest( '.mn-mm-card-copy' ) ) {
+			if ( e.target.closest( '.pnmf-card-check' ) || e.target.closest( '.pnmf-card-copy' ) ) {
 				return;
 			}
 
 			const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-			const card = e.target.closest( '.mn-mm-card' );
+			const card = e.target.closest( '.pnmf-card' );
 
 			/* 卡片上按下 → 什麼都不搶：短按是勾選、按住移動是原生拖曳。
 			 * （曾有「長按 350ms 轉框選」的設計，但拖動前稍作停頓就會超過
@@ -2535,14 +2540,14 @@
 		} );
 
 		/* 拖拉卡片 */
-		$( '#mn-mm-grid' ).addEventListener( 'dragstart', ( e ) => {
+		$( '#pnmf-grid' ).addEventListener( 'dragstart', ( e ) => {
 			/* 拖動優先：框選若在跑（或異常殘留）直接取消，讓拖曳放行——
 			 * 舊行為是 preventDefault 擋掉拖曳，殘留的框選會永久殺死拖動。 */
 			if ( marquee ) {
 				marqueeCancel();
 			}
 
-			const card = e.target.closest( '.mn-mm-card' );
+			const card = e.target.closest( '.pnmf-card' );
 			if ( ! card ) {
 				return;
 			}
@@ -2553,25 +2558,25 @@
 			/* Firefox 沒有 setData 不會啟動拖曳 */
 			e.dataTransfer.setData( 'text/plain', String( id ) );
 			/* 左側樹進入「可投放」狀態 */
-			const tree = document.querySelector( '#mn-mm-tree' );
+			const tree = document.querySelector( '#pnmf-tree' );
 			if ( tree ) {
-				tree.classList.add( 'mn-mm-tree-droppable' );
+				tree.classList.add( 'pnmf-tree-droppable' );
 			}
 		} );
 
 		window.addEventListener( 'dragend', () => {
 			state.dragIds = null;
-			const tree = document.querySelector( '#mn-mm-tree' );
+			const tree = document.querySelector( '#pnmf-tree' );
 			if ( tree ) {
-				tree.classList.remove( 'mn-mm-tree-droppable' );
+				tree.classList.remove( 'pnmf-tree-droppable' );
 			}
 			document
-				.querySelectorAll( '#mn-mm-tree .is-drop-target' )
+				.querySelectorAll( '#pnmf-tree .is-drop-target' )
 				.forEach( ( r ) => r.classList.remove( 'is-drop-target' ) );
 		} );
 
 		/* ---------- 分頁 ---------- */
-		$( '#mn-mm-pagination' ).addEventListener( 'click', ( e ) => {
+		$( '#pnmf-pagination' ).addEventListener( 'click', ( e ) => {
 			const btn = e.target.closest( '[data-page]' );
 			if ( ! btn ) {
 				return;
@@ -2582,15 +2587,15 @@
 			}
 			state.paged = page;
 			loadMedia();
-			$( '#mn-mm-grid' ).scrollIntoView( { behavior: 'smooth', block: 'start' } );
+			$( '#pnmf-grid' ).scrollIntoView( { behavior: 'smooth', block: 'start' } );
 		} );
 
 		/* ---------- 批次操作列 ---------- */
-		$( '#mn-mm-select-all' ).addEventListener( 'click', () => {
+		$( '#pnmf-select-all' ).addEventListener( 'click', () => {
 			state.selectAll = true;
 			state.selected.clear();
 			document
-				.querySelectorAll( '.mn-mm-card' )
+				.querySelectorAll( '.pnmf-card' )
 				.forEach( ( c ) => c.classList.add( 'is-selected' ) );
 			renderBulkbar();
 			toast(
@@ -2599,38 +2604,38 @@
 			);
 		} );
 
-		$( '#mn-mm-clear-selection' ).addEventListener( 'click', () => {
+		$( '#pnmf-clear-selection' ).addEventListener( 'click', () => {
 			state.selectAll = false;
 			state.selected.clear();
 			document
-				.querySelectorAll( '.mn-mm-card.is-selected' )
+				.querySelectorAll( '.pnmf-card.is-selected' )
 				.forEach( ( c ) => c.classList.remove( 'is-selected' ) );
 			renderBulkbar();
 		} );
 
-		$( '#mn-mm-bulkbar' ).addEventListener( 'click', ( e ) => {
+		$( '#pnmf-bulkbar' ).addEventListener( 'click', ( e ) => {
 			const btn = e.target.closest( '[data-bulk]' );
 			if ( btn ) {
 				doBulk( btn.dataset.bulk );
 			}
 		} );
 
-		$( '#mn-mm-toggle-edit' ).addEventListener( 'click', () => {
-			const box = $( '#mn-mm-bulk-edit' );
+		$( '#pnmf-toggle-edit' ).addEventListener( 'click', () => {
+			const box = $( '#pnmf-bulk-edit' );
 			box.hidden = ! box.hidden;
 		} );
 
-		$( '#mn-mm-add-folder' ).addEventListener( 'click', () => {
+		$( '#pnmf-add-folder' ).addEventListener( 'click', () => {
 			const parent =
 				typeof state.folderId === 'number' && state.folderId > 0 ? state.folderId : 0;
 			addFolder( parent );
 		} );
 
-		$( '#mn-mm-add-tag' ).addEventListener( 'click', addTag );
+		$( '#pnmf-add-tag' ).addEventListener( 'click', addTag );
 
 		/* ---------- 詳細面板 ---------- */
-		$( '#mn-mm-inspector' ).addEventListener( 'click', async ( e ) => {
-			if ( e.target.closest( '#mn-mm-save-item' ) ) {
+		$( '#pnmf-inspector' ).addEventListener( 'click', async ( e ) => {
+			if ( e.target.closest( '#pnmf-save-item' ) ) {
 				saveCurrentItem();
 				return;
 			}
@@ -2651,8 +2656,8 @@
 					const data = await api( 'media_delete', { ids: [ id ] } );
 					toast( data.message, 'ok' );
 					state.current = null;
-					$( '#mn-mm-inspector-empty' ).hidden = false;
-					$( '#mn-mm-inspector-body' ).hidden = true;
+					$( '#pnmf-inspector-empty' ).hidden = false;
+					$( '#pnmf-inspector-body' ).hidden = true;
 					await refresh( true );
 				} catch ( err ) {
 					toast( err.message, 'error' );
@@ -2688,11 +2693,11 @@
 		} );
 
 		/* ---------- 頂部按鈕 ---------- */
-		$( '#mn-mm-btn-scan' ).addEventListener( 'click', scanUsage );
-		$( '#mn-mm-btn-logs' ).addEventListener( 'click', openLogs );
-		$( '#mn-mm-btn-auto' ).addEventListener( 'click', () => {
+		$( '#pnmf-btn-scan' ).addEventListener( 'click', scanUsage );
+		$( '#pnmf-btn-logs' ).addEventListener( 'click', openLogs );
+		$( '#pnmf-btn-auto' ).addEventListener( 'click', () => {
 			renderRules();
-			openModal( '#mn-mm-modal-auto' );
+			openModal( '#pnmf-modal-auto' );
 		} );
 
 		/* ---------- 頁內上傳（方案 A 按鈕 + 方案 B 拖放區）----------
@@ -2718,7 +2723,7 @@
 					await refresh( true );
 					toast( sprintf( __( 'Uploaded %d media. The list and folders have been updated.', 'plugnest-media-folders' ), n ), 'ok' );
 				}
-				const bar = document.querySelector( '#mn-mm-upload-progress' );
+				const bar = document.querySelector( '#pnmf-upload-progress' );
 				if ( bar ) {
 					bar.hidden = true;
 				}
@@ -2731,7 +2736,7 @@
 
 		let uploadFrame = null;
 
-		$( '#mn-mm-btn-upload' ).addEventListener( 'click', () => {
+		$( '#pnmf-btn-upload' ).addEventListener( 'click', () => {
 			if ( typeof window.wp === 'undefined' || ! window.wp.media ) {
 				toast( __( 'Media scripts are not loaded. Please reload the page.', 'plugnest-media-folders' ), 'error' );
 				return;
@@ -2772,16 +2777,16 @@
 		/* ---------- 頁內上傳（方案 B）：plupload 拖放區 ----------
 		 * 建構 wp.Uploader 包裝器實例（核心會處理 nonce/上限/mime，
 		 * 並把完成的附件加進 wp.Uploader.queue）。
-		 * 拖放範圍＝整個外掛頁面（.mn-mm-wrap）：拖到哪個資料夾列就傳進
+		 * 拖放範圍＝整個外掛頁面（.pnmf-wrap）：拖到哪個資料夾列就傳進
 		 * 那個資料夾（uploadFolderOverride），其餘位置＝目前瀏覽的資料夾。
 		 * updateUploadTarget / uploadTargetFolderId 在 IIFE 頂層（renderTree 也會呼叫）。 */
 		if ( window.wp && window.wp.Uploader && window.plupload && CFG.uploadNonce ) {
 			try {
 				const mmUploader = new window.wp.Uploader( {
-					container: document.getElementById( 'mn-mm-upload-dropzone' ),
-					browser:   document.getElementById( 'mn-mm-upload-browse' ),
-					dropzone:  document.querySelector( '.mn-mm-wrap' ),
-					params:    { mn_mm_nonce: CFG.uploadNonce },
+					container: document.getElementById( 'pnmf-upload-dropzone' ),
+					browser:   document.getElementById( 'pnmf-upload-browse' ),
+					dropzone:  document.querySelector( '.pnmf-wrap' ),
+					params:    { pnmf_nonce: CFG.uploadNonce },
 				} );
 
 				if ( mmUploader.supported && mmUploader.uploader ) {
@@ -2796,17 +2801,17 @@
 						const current = Object.assign(
 							{},
 							up.getOption ? up.getOption( 'multipart_params' ) : up.settings.multipart_params,
-							{ mn_mm_folder: String( target ), mn_mm_nonce: CFG.uploadNonce }
+							{ pnmf_folder: String( target ), pnmf_nonce: CFG.uploadNonce }
 						);
 						up.setOption( 'multipart_params', current );
 					} );
 
 					mmUploader.uploader.bind( 'UploadProgress', ( up ) => {
-						const bar = document.querySelector( '#mn-mm-upload-progress' );
+						const bar = document.querySelector( '#pnmf-upload-progress' );
 						if ( bar ) {
 							bar.hidden = false;
-							const fill = document.querySelector( '#mn-mm-upload-progress-fill' );
-							const text = document.querySelector( '#mn-mm-upload-progress-text' );
+							const fill = document.querySelector( '#pnmf-upload-progress-fill' );
+							const text = document.querySelector( '#pnmf-upload-progress-text' );
 							if ( fill ) {
 								fill.style.width = up.total.percent + '%';
 							}
@@ -2817,7 +2822,7 @@
 					} );
 
 					/* 暴露實例供除錯與測試 */
-					window.MN_MM.uploader = mmUploader;
+					window.PNMF.uploader = mmUploader;
 				}
 			} catch ( e ) {
 				/* 環境不支援時靜默跳過，不影響其他功能。 */
@@ -2843,11 +2848,11 @@
 			 * 解法＝把摘除排進 rAF：本輪事件（含它的 add）全部跑完、
 			 * 下一帧繪製之前執行 → 遮罩永遠畫不出來。
 			 * 外部檔案拖動（types 含 Files）一律不動，遮罩照常。 */
-			const mmWrap = document.querySelector( '.mn-mm-wrap' );
+			const mmWrap = document.querySelector( '.pnmf-wrap' );
 			if ( mmWrap ) {
 				const clearUploadMask = () => {
 					mmWrap.classList.remove( 'drag-over' );
-					const bar = document.querySelector( '.mn-mm-uploadbar' );
+					const bar = document.querySelector( '.pnmf-uploadbar' );
 					if ( bar ) {
 						bar.classList.remove( 'drag-over', 'is-dragover' );
 					}
@@ -2877,11 +2882,11 @@
 		}
 
 		/* ---------- 自動分類對話框 ---------- */
-		$( '#mn-mm-preview-btn' ).addEventListener( 'click', previewAuto );
-		$( '#mn-mm-apply-btn' ).addEventListener( 'click', applyAuto );
-		$( '#mn-mm-save-rules' ).addEventListener( 'click', () => saveRules( false ) );
+		$( '#pnmf-preview-btn' ).addEventListener( 'click', previewAuto );
+		$( '#pnmf-apply-btn' ).addEventListener( 'click', applyAuto );
+		$( '#pnmf-save-rules' ).addEventListener( 'click', () => saveRules( false ) );
 
-		$( '#mn-mm-reset-rules' ).addEventListener( 'click', async () => {
+		$( '#pnmf-reset-rules' ).addEventListener( 'click', async () => {
 			if ( ! window.confirm( __( 'Reset to the default rules? Your current rules will be overwritten.', 'plugnest-media-folders' ) ) ) {
 				return;
 			}
@@ -2895,7 +2900,7 @@
 			}
 		} );
 
-		$( '#mn-mm-add-rule' ).addEventListener( 'click', () => {
+		$( '#pnmf-add-rule' ).addEventListener( 'click', () => {
 			state.rules = collectRules();
 			state.rules.push( {
 				id: '',
@@ -2917,8 +2922,8 @@
 			renderRules();
 		} );
 
-		$( '#mn-mm-rules' ).addEventListener( 'click', ( e ) => {
-			const card = e.target.closest( '.mn-mm-rule-card' );
+		$( '#pnmf-rules' ).addEventListener( 'click', ( e ) => {
+			const card = e.target.closest( '.pnmf-rule-card' );
 			if ( ! card ) {
 				return;
 			}
@@ -2946,7 +2951,7 @@
 		} );
 
 		/* ---------- 操作記錄 ---------- */
-		$( '#mn-mm-log-list' ).addEventListener( 'click', ( e ) => {
+		$( '#pnmf-log-list' ).addEventListener( 'click', ( e ) => {
 			const btn = e.target.closest( '[data-undo]' );
 			if ( btn ) {
 				undoLog( parseInt( btn.dataset.undo, 10 ) );
@@ -2954,7 +2959,7 @@
 		} );
 
 		/* ---------- 對話框關閉 ---------- */
-		document.querySelectorAll( '.mn-mm-modal' ).forEach( ( modal ) => {
+		document.querySelectorAll( '.pnmf-modal' ).forEach( ( modal ) => {
 			modal.addEventListener( 'click', ( e ) => {
 				if ( e.target === modal || e.target.closest( '[data-close]' ) ) {
 					modal.hidden = true;
@@ -2973,12 +2978,12 @@
 				return;
 			}
 
-			document.querySelectorAll( '.mn-mm-modal' ).forEach( ( m ) => {
+			document.querySelectorAll( '.pnmf-modal' ).forEach( ( m ) => {
 				m.hidden = true;
 			} );
 		} );
 
-		$( '#mn-mm-progress-cancel' ).addEventListener( 'click', async () => {
+		$( '#pnmf-progress-cancel' ).addEventListener( 'click', async () => {
 			autoCancelled = true;
 			try {
 				const data = await api( 'auto_cancel', {} );
@@ -2994,7 +2999,7 @@
 	
 	/* Pro 等附加外掛的擴展點（wp.org 規範：Pro 代碼在 Pro 外掛內，
 	 * 透過此 API 與免費版協作）。 */
-	window.MN_MM_UI = { state, $, esc, __, sprintf, toast, api, refresh, loadTree, renderTree, renderFoldersBar, currentScope, selectedIds, openModal, closeModal, progress, loadMedia };
+	window.PNMF_UI = { state, $, esc, __, sprintf, toast, api, refresh, loadTree, renderTree, renderFoldersBar, currentScope, selectedIds, openModal, closeModal, progress, loadMedia };
 
 /* =========================================================
 	 *  啟動

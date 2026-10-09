@@ -6,7 +6,7 @@
  * 讓它看起來像原生介面的一部分。
  */
 
-.mn-mm-upload-picker {
+.pnmf-upload-picker {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -19,23 +19,23 @@
 	box-shadow: 0 1px 1px rgba( 0, 0, 0, 0.04 );
 }
 
-.mn-mm-upload-picker label {
+.pnmf-upload-picker label {
 	font-weight: 600;
 	white-space: nowrap;
 }
 
-.mn-mm-upload-picker select {
+.pnmf-upload-picker select {
 	max-width: 340px;
 }
 
 /* 說明文字自己佔一行，不要擠在 label 與 select 中間。 */
-.mn-mm-upload-picker .description {
+.pnmf-upload-picker .description {
 	flex-basis: 100%;
 	margin: 2px 0 0;
 }
 
 @media screen and ( max-width: 782px ) {
-	.mn-mm-upload-picker select {
+	.pnmf-upload-picker select {
 		max-width: none;
 		width: 100%;
 	}

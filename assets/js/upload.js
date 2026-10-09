@@ -16,14 +16,14 @@
 ( function () {
 	'use strict';
 
-	var FIELD = 'mn_mm_folder';
-	var NONCE = 'mn_mm_nonce';
+	var FIELD = 'pnmf_folder';
+	var NONCE = 'pnmf_nonce';
 
 	/**
 	 * 目前選到的資料夾（空字串＝不指定）。
 	 */
 	function currentFolder() {
-		var sel = document.getElementById( 'mn-mm-upload-folder' );
+		var sel = document.getElementById( 'pnmf-upload-folder' );
 		return sel ? sel.value : '';
 	}
 
@@ -31,7 +31,7 @@
 	 * 表單上的 nonce 值。
 	 */
 	function currentNonce() {
-		var el = document.getElementById( 'mn-mm-upload-nonce' );
+		var el = document.getElementById( 'pnmf-upload-nonce' );
 		return el ? el.value : '';
 	}
 
@@ -68,10 +68,10 @@
 		if ( ! uploader || typeof uploader.bind !== 'function' ) {
 			return;
 		}
-		if ( uploader.mnMmBound ) {
+		if ( uploader.pnmfBound ) {
 			return;
 		}
-		uploader.mnMmBound = true;
+		uploader.pnmfBound = true;
 
 		uploader.bind( 'BeforeUpload', function ( up ) {
 			applyParams( up );

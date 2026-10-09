@@ -6,11 +6,11 @@
  * 使用 wp.element.createElement，不需建置流程。
  */
 ( function () {
-	if ( typeof window.wp === 'undefined' || ! window.wp.plugins || ! window.wp.editPost || ! window.MN_MM_GUT ) {
+	if ( typeof window.wp === 'undefined' || ! window.wp.plugins || ! window.wp.editPost || ! window.PNMF_GUT ) {
 		return;
 	}
 
-	var CFG = window.MN_MM_GUT;
+	var CFG = window.PNMF_GUT;
 	var __ = window.wp.i18n && window.wp.i18n.__ ? window.wp.i18n.__ : function ( s ) { return s; };
 	var el = window.wp.element.createElement;
 	var useState = window.wp.element.useState;
@@ -35,7 +35,7 @@
 		useEffect( function () {
 			if ( ! postId ) { return; }
 			var body = new FormData();
-			body.append( 'action', 'mn_mm_post_media' );
+			body.append( 'action', 'pnmf_post_media' );
 			body.append( 'nonce', CFG.nonce );
 			body.append( 'post_id', postId );
 			fetch( CFG.ajaxUrl, { method: 'POST', credentials: 'same-origin', body: body } )
@@ -49,7 +49,7 @@
 
 		function setFolder( id, folderId ) {
 			var body = new FormData();
-			body.append( 'action', 'mn_mm_save_item' );
+			body.append( 'action', 'pnmf_save_item' );
 			body.append( 'nonce', CFG.nonce );
 			body.append( 'id', id );
 			body.append( 'folder_id', folderId );
@@ -88,14 +88,14 @@
 		}
 
 		return el( window.wp.editPost.PluginDocumentSettingPanel, {
-			name: 'mn-mm-folders',
+			name: 'pnmf-folders',
 			title: __( 'Media folders', 'plugnest-media-folders' ),
 			icon: 'images-alt2',
 			initialOpen: false,
 		}, rows );
 	}
 
-	window.wp.plugins.registerPlugin( 'mn-mm-folders-panel', {
+	window.wp.plugins.registerPlugin( 'pnmf-folders-panel', {
 		render: Panel,
 		icon: 'images-alt2',
 	} );

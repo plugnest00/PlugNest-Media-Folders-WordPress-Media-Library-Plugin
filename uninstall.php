@@ -23,10 +23,23 @@ global $wpdb;
 
 /* ---------- 1. 設定 ---------- */
 $options = array(
+	'pnmf_version',
+	'pnmf_auto_rules',
+	'pnmf_notice_dismissed',
+	'pnmf_migrated_from_tkm',
+	'pnmf_migrated_mn',
+	/* 舊前綴時期的鍵名（2.5.1 之前；遷移未跑完即解除安裝的保險清理）。 */
 	'mn_mm_version',
 	'mn_mm_auto_rules',
 	'mn_mm_notice_dismissed',
 	'mn_mm_migrated_from_tkm',
+	'mn_mm_default_folders_created',
+	'mn_mm_default_tags_created',
+	/* 核心為舊 taxonomy 自建的 {tax}_children 階層快取。 */
+	'mn_media_folder_children',
+	'mn_media_tag_children',
+	'tkm_media_folder_children',
+	'tkm_media_tag_children',
 );
 
 foreach ( $options as $option ) {
@@ -34,16 +47,26 @@ foreach ( $options as $option ) {
 }
 
 /* ---------- 2. 操作記錄資料表 ---------- */
-$table = $wpdb->prefix . 'mn_media_log';
-$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+foreach ( array( 'pnmf_media_log', 'mn_media_log' ) as $log_table ) {
+	$table = $wpdb->prefix . $log_table;
+	$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+}
 
 /* ---------- 3. 使用狀態快取 ---------- */
-foreach ( array( '_mn_mm_usage', '_mn_mm_usage_at' ) as $meta_key ) {
+foreach ( array( '_pnmf_usage', '_pnmf_usage_at', '_pnmf_filesize', '_mn_mm_usage', '_mn_mm_usage_at', '_mn_mm_filesize' ) as $meta_key ) {
 	$wpdb->delete( $wpdb->postmeta, array( 'meta_key' => $meta_key ), array( '%s' ) );
 }
 
-/* ---------- 4. 引用索引快取 ---------- */
+/* ---------- 4. 引用索引快取（含舊鍵名） ---------- */
+delete_transient( 'pnmf_usage_index' );
 delete_transient( 'mn_mm_usage_index' );
+$wpdb->query(
+	"DELETE FROM {$wpdb->options}
+	 WHERE option_name LIKE '\\_transient\\_pnmf\\_job\\_%'
+	    OR option_name LIKE '\\_transient\\_timeout\\_pnmf\\_job\\_%'
+	    OR option_name LIKE '\\_transient\\_mn\\_mm\\_job\\_%'
+	    OR option_name LIKE '\\_transient\\_timeout\\_mn\\_mm\\_job\\_%'"
+);
 
 /* ---------- 5. 分類項目 ---------- */
 /*
@@ -51,7 +74,7 @@ delete_transient( 'mn_mm_usage_index' );
  * 這是「分類」而非「內容」，刪掉不會影響任何媒體檔案；
  * 但如果你之後可能重新安裝並想保留分類，請改為直接停用外掛。
  */
-foreach ( array( 'mn_media_folder', 'mn_media_tag' ) as $taxonomy ) {
+foreach ( array( 'pnmf_media_folder', 'pnmf_media_tag', 'mn_media_folder', 'mn_media_tag' ) as $taxonomy ) {
 	$term_ids = $wpdb->get_col(
 		$wpdb->prepare(
 			"SELECT term_id FROM {$wpdb->term_taxonomy} WHERE taxonomy = %s",

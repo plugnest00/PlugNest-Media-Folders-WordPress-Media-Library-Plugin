@@ -3,7 +3,7 @@
  * Plugin Name:       PlugNest Media Folders
  * Plugin URI:        https://media-folders.plugnest.dev/
  * Description:       Media library management: virtual folders (hierarchical, role-restricted), tags, batch editing, usage scanning, unused cleanup, missing-alt workflow, folder import/export, in-page upload, and Elementor/Gutenberg media modal integration. Never touches file paths.
- * Version:           2.5.0
+ * Version:           2.5.4
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            PlugNest
@@ -16,10 +16,10 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'MN_MM_VERSION', '2.5.0' );
-define( 'MN_MM_FILE', __FILE__ );
-define( 'MN_MM_PATH', plugin_dir_path( __FILE__ ) );
-define( 'MN_MM_URL', plugin_dir_url( __FILE__ ) );
+define( 'PNMF_VERSION', '2.5.4' );
+define( 'PNMF_FILE', __FILE__ );
+define( 'PNMF_PATH', plugin_dir_path( __FILE__ ) );
+define( 'PNMF_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * 載入翻譯檔（languages/）。字串皆以 gettext 包裝，繁中／簡中就緒。
@@ -37,7 +37,7 @@ add_action(
 		if ( ! $locale || 'en_US' === $locale ) {
 			return;
 		}
-		$mo = MN_MM_PATH . 'languages/plugnest-media-folders-' . $locale . '.mo';
+		$mo = PNMF_PATH . 'languages/plugnest-media-folders-' . $locale . '.mo';
 		if ( is_readable( $mo ) ) {
 			load_textdomain( 'plugnest-media-folders', $mo );
 		}
@@ -47,32 +47,34 @@ add_action(
 /**
  * 分類法 slug。
  *
- * ⚠️ 上線後不可更改：一旦有媒體被歸類，改 slug 等於讓既有分類關係全部脫鉤。
+ * slug 曾於 2.5.1 從 mn_media_* 改為 pnmf_media_*（wp.org 前綴規範），
+ * 舊站資料由 PNMF_Migrate 原地改名遷移；此後不要再動。
  */
-define( 'MN_MM_TAX_FOLDER', 'mn_media_folder' );
-define( 'MN_MM_TAX_TAG', 'mn_media_tag' );
+define( 'PNMF_TAX_FOLDER', 'pnmf_media_folder' );
+define( 'PNMF_TAX_TAG', 'pnmf_media_tag' );
 
 /** 操作記錄資料表（不含 wpdb 前綴）。 */
-define( 'MN_MM_TBL_LOG', 'mn_media_log' );
+define( 'PNMF_TBL_LOG', 'pnmf_media_log' );
 
 /** 使用狀態快取的 postmeta key（值為 1/0）。 */
-define( 'MN_MM_META_USAGE', '_mn_mm_usage' );
-define( 'MN_MM_META_USAGE_AT', '_mn_mm_usage_at' );
+define( 'PNMF_META_USAGE', '_pnmf_usage' );
+define( 'PNMF_META_USAGE_AT', '_pnmf_usage_at' );
 
-require_once MN_MM_PATH . 'includes/class-mn-mm-taxonomy.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-log.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-usage.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-query.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-auto.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-ajax.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-native.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-upload.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-modal.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-admin.php';
-require_once MN_MM_PATH . 'includes/class-mn-mm-plugin.php';
+require_once PNMF_PATH . 'includes/class-pnmf-taxonomy.php';
+require_once PNMF_PATH . 'includes/class-pnmf-log.php';
+require_once PNMF_PATH . 'includes/class-pnmf-usage.php';
+require_once PNMF_PATH . 'includes/class-pnmf-query.php';
+require_once PNMF_PATH . 'includes/class-pnmf-auto.php';
+require_once PNMF_PATH . 'includes/class-pnmf-ajax.php';
+require_once PNMF_PATH . 'includes/class-pnmf-native.php';
+require_once PNMF_PATH . 'includes/class-pnmf-upload.php';
+require_once PNMF_PATH . 'includes/class-pnmf-modal.php';
+require_once PNMF_PATH . 'includes/class-pnmf-admin.php';
+require_once PNMF_PATH . 'includes/class-pnmf-plugin.php';
+require_once PNMF_PATH . 'includes/class-pnmf-migrate.php';
 
-MN_MM_Plugin::instance();
-MN_MM_Modal::instance();
+PNMF_Plugin::instance();
+PNMF_Modal::instance();
 
-register_activation_hook( __FILE__, array( 'MN_MM_Plugin', 'activate' ) );
-register_deactivation_hook( __FILE__, array( 'MN_MM_Plugin', 'deactivate' ) );
+register_activation_hook( __FILE__, array( 'PNMF_Plugin', 'activate' ) );
+register_deactivation_hook( __FILE__, array( 'PNMF_Plugin', 'deactivate' ) );
