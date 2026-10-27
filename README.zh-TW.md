@@ -6,7 +6,7 @@
 
 PlugNest Media Folders 為 WordPress 媒體庫加入可巢狀、可拖曳的資料夾、標籤、批次工具與使用狀態掃描。它只寫入分類資料：你的檔案不會被搬動、改名或改網址；停用外掛後，網站與原本完全一樣。
 
-📦 **從 WordPress.org 安裝**（審核通過後）· 🏠 [產品網站](https://media-folders.plugnest.dev/zh-tw.html) · 📖 [文件](https://media-folders.plugnest.dev/docs.html)
+📦 **[從 WordPress.org 安裝](https://wordpress.org/plugins/plugnest-media-folders/)** · 🏠 [產品網站](https://media-folders.plugnest.dev/zh-tw.html) · 📖 [文件](https://media-folders.plugnest.dev/docs.html)
 
 ## 功能特色
 

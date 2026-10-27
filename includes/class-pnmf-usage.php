@@ -265,6 +265,37 @@ class PNMF_Usage {
 			}
 		}
 
+		/* (b2) 泛用 /uploads/ 路徑：Bedrock 式 /app/uploads、被改寫掉
+		 * wp-content 前綴的 CDN 路徑等。與 (b) 重複捕捉無妨——索引是集合。 */
+		if ( preg_match_all( '#/uploads/([^"\'<>\s\)\]]+)#i', $text, $m ) ) {
+			foreach ( $m[1] as $raw ) {
+				$raw = preg_replace( '/[?#].*$/', '', $raw );
+				$raw = urldecode( $raw );
+				$raw = trim( $raw, '\\/' );
+				if ( '' === $raw ) {
+					continue;
+				}
+				$base            = self::strip_size( $raw );
+				$paths[ $base ]  = 1;
+				$names[ basename( $base ) ] = 1;
+			}
+		}
+
+		/* (d) 任意 http(s) URL 的檔名：offload／CDN 把網域與路徑整個換掉
+		 * （Cloudinary 式完全改寫）時，路徑比對全部失效——檔名比對是
+		 * 最後一道底線。抓「帶副檔名的 basename」雜訊較高，但方向安全：
+		 * 寧可誤判「使用中」，絕不誤判「未使用」。 */
+		if ( preg_match_all( '#(https?://[^\s"\'<>\)\]]+)#i', $text, $m ) ) {
+			foreach ( $m[1] as $url ) {
+				$url = preg_replace( '/[?#].*$/', '', $url );
+				$url = urldecode( $url );
+				$name = basename( $url );
+				if ( preg_match( '/\.[a-z0-9]{2,6}$/i', $name ) ) {
+					$names[ self::strip_size( $name ) ] = 1;
+				}
+			}
+		}
+
 		/* (c) Elementor JSON 中的 "id":123（保守起見一律視為附件 ID，
 		       寧可誤判為「使用中」也不要誤判為「未使用」） */
 		if ( false !== strpos( $text, '"id"' ) && preg_match_all( '/"id"\s*:\s*"?(\d+)"?/i', $text, $m ) ) {

@@ -456,6 +456,7 @@ class PNMF_Taxonomy {
 				'count'   => isset( $counts[ $t->term_id ] ) ? $counts[ $t->term_id ] : 0,
 				'color'   => (string) get_term_meta( $t->term_id, 'pnmf_color', true ),
 				'star'    => (int) get_term_meta( $t->term_id, 'pnmf_star', true ),
+				'sort'    => (string) get_term_meta( $t->term_id, 'pnmf_sort', true ),
 				'roles'   => is_array( $roles_raw ) ? array_values( array_map( 'strval', $roles_raw ) ) : array(),
 			);
 			self::flatten( $by_parent, (int) $t->term_id, $depth + 1, $counts, $out );

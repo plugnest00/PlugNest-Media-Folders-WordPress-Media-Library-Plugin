@@ -1,0 +1,23 @@
+/*
+ * 側欄圖示。
+ *
+ * 圖示走 SVG 的 data URI（assets/icon.svg），WordPress 會輸出
+ * <div class="wp-menu-image svg" style="background-image:url('data:image/svg+xml;base64,…')">
+ * 並由核心設定 background-size。這裡只固定尺寸，避免不同主題把它拉大。
+ *
+ * 下面那條 img 規則是後備：若有人改回 PNG data URI（舊版寫法），
+ * WordPress 會輸出 <img>，而核心 CSS 只給 padding、不給寬高，
+ * 128×128 的圖就會撐爆 34px 的選單。
+ */
+#adminmenu #toplevel_page_plugnest-media-folders .wp-menu-image.svg {
+	background-size: 20px 20px;
+	background-position: center 7px;
+	background-repeat: no-repeat;
+}
+
+#adminmenu #toplevel_page_plugnest-media-folders .wp-menu-image img {
+	width: 20px;
+	height: 20px;
+	padding: 7px 0 0;
+	border-radius: 4px;
+}

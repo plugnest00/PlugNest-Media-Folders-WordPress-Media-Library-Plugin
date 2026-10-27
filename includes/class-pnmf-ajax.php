@@ -38,6 +38,7 @@ class PNMF_Ajax {
 			'post_media'       => 'post_media',
 			'folder_color'     => 'folder_color',
 			'folder_star'      => 'folder_star',
+			'folder_sort'      => 'folder_sort',
 			'filesize_build'   => 'filesize_build',
 			'folder_create'    => 'folder_create',
 			'folder_rename'    => 'folder_rename',
@@ -53,10 +54,21 @@ class PNMF_Ajax {
 			'auto_reset_rules' => 'auto_reset_rules',
 			'usage_scan'       => 'usage_scan',
 			'usage_flush'      => 'usage_flush',
+			'views_get'        => 'views_get',
+			'views_save'       => 'views_save',
+			'views_delete'     => 'views_delete',
+			'dupe_build'       => 'dupe_build',
+			'dupe_list'        => 'dupe_list',
+			'dupe_flush'       => 'dupe_flush',
+			'dupe_build_cancel' => 'dupe_build_cancel',
+			'dupe_hash_state'   => 'dupe_hash_state',
+			'dupe_refs'        => 'dupe_refs',
 			'log_list'         => 'log_list',
 			'log_undo'         => 'log_undo',
 			'stats'            => 'stats',
+			'folder_stats'     => 'folder_stats',
 			'tree'             => 'tree',
+			'guide_mute'       => 'guide_mute',
 		);
 
 		foreach ( $map as $action => $method ) {
@@ -262,11 +274,69 @@ class PNMF_Ajax {
 	}
 
 	/**
+	 * 記住這個使用者不想再自動看到功能導覽（每人各自設定）。
+	 */
+	public function guide_mute() {
+		$this->guard();
+		update_user_meta( get_current_user_id(), 'pnmf_guide_muted', '1' );
+		wp_send_json_success( array( 'muted' => true ) );
+	}
+
+	/**
 	 * 統計數字。
 	 */
 	public function stats() {
 		$this->guard();
 		wp_send_json_success( PNMF_Query::stats() );
+	}
+
+	/**
+	 * 各資料夾統計（直接指派；檔案數／類型分布／占用空間）。
+	 *
+	 * 空間用 _pnmf_filesize 索引（filesize_build 建置過才有；沒索引的
+	 * 記為 0，面板上顯示 0 B）。類型分布以 mime 前綴分五組。
+	 */
+	public function folder_stats() {
+		$this->guard();
+
+		global $wpdb;
+
+		$rows = $wpdb->get_results(
+			"SELECT tt.term_id,
+					COUNT(*) AS total,
+					SUM( CASE WHEN p.post_mime_type LIKE 'image/%' THEN 1 ELSE 0 END ) AS images,
+					SUM( CASE WHEN p.post_mime_type LIKE 'video/%' THEN 1 ELSE 0 END ) AS videos,
+					SUM( CASE WHEN p.post_mime_type LIKE 'audio/%' THEN 1 ELSE 0 END ) AS audio,
+					SUM( CASE WHEN p.post_mime_type NOT LIKE 'image/%'
+								AND p.post_mime_type NOT LIKE 'video/%'
+								AND p.post_mime_type NOT LIKE 'audio/%' THEN 1 ELSE 0 END ) AS other,
+					COALESCE( SUM( fs.meta_value ), 0 ) AS bytes
+			   FROM {$wpdb->term_relationships} tr
+			   JOIN {$wpdb->term_taxonomy} tt
+			         ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'pnmf_media_folder'
+			   JOIN {$wpdb->posts} p
+			         ON p.ID = tr.object_id
+			        AND p.post_type = 'attachment'
+			        AND p.post_status IN ('inherit','private','publish')
+			   LEFT JOIN {$wpdb->postmeta} fs
+			         ON fs.post_id = p.ID AND fs.meta_key = '_pnmf_filesize'
+			  GROUP BY tt.term_id",
+			ARRAY_A
+		);
+
+		$out = array();
+		foreach ( (array) $rows as $r ) {
+			$out[ (int) $r['term_id'] ] = array(
+				'total'   => (int) $r['total'],
+				'images'  => (int) $r['images'],
+				'videos'  => (int) $r['videos'],
+				'audio'   => (int) $r['audio'],
+				'other'   => (int) $r['other'],
+				'bytes'   => (int) $r['bytes'],
+			);
+		}
+
+		wp_send_json_success( array( 'stats' => $out ) );
 	}
 
 	/* =========================================================
@@ -837,6 +907,44 @@ class PNMF_Ajax {
 	}
 
 	/**
+	 * 設定資料夾的預設排序（'' = 移除）。
+	 */
+	public function folder_sort() {
+		$this->guard();
+
+		$term_id = (int) $this->param( 'term_id', 0 );
+		$term    = get_term( $term_id, PNMF_TAX_FOLDER );
+		if ( ! $term || is_wp_error( $term ) ) {
+			wp_send_json_error( array( 'message' => __( 'Folder not found.', 'plugnest-media-folders' ) ), 400 );
+		}
+
+		if ( ! PNMF_Taxonomy::can_manage_folder( $term_id ) ) {
+			wp_send_json_error( array( 'message' => __( 'You do not have permission to manage this folder.', 'plugnest-media-folders' ) ), 403 );
+		}
+
+		$sort    = sanitize_text_field( (string) $this->param( 'sort', '' ) );
+		$allowed = array( 'date-DESC', 'date-ASC', 'title-ASC', 'title-DESC', 'size-DESC', 'size-ASC', 'ID-DESC' );
+
+		if ( '' === $sort ) {
+			delete_term_meta( $term_id, 'pnmf_sort' );
+		} elseif ( in_array( $sort, $allowed, true ) ) {
+			update_term_meta( $term_id, 'pnmf_sort', $sort );
+		} else {
+			wp_send_json_error( array( 'message' => __( 'Invalid sort option.', 'plugnest-media-folders' ) ), 400 );
+		}
+
+		wp_send_json_success(
+			array(
+				'term_id' => $term_id,
+				'sort'    => '' === $sort ? '' : $sort,
+				'message' => '' === $sort
+					? __( 'Folder default sort removed.', 'plugnest-media-folders' )
+					: __( 'Folder default sort saved.', 'plugnest-media-folders' ),
+			)
+		);
+	}
+
+	/**
 	 * 星標／釘選資料夾（切換）。
 	 */
 	public function folder_star() {
@@ -1284,6 +1392,448 @@ class PNMF_Ajax {
 		$this->guard();
 		PNMF_Usage::flush_index();
 		wp_send_json_success( array( 'message' => __( 'Reference index rebuilt. The next scan will re-analyze site content.', 'plugnest-media-folders' ) ) );
+	}
+
+	/* =========================================================
+	 *  智慧篩選器（儲存的檢視；存在使用者 meta，跟著使用者走）
+	 * ========================================================= */
+
+	/** 使用者 meta key。 */
+	const VIEWS_META = 'pnmf_saved_views';
+
+	/** 每位使用者最多儲存幾個檢視。 */
+	const MAX_VIEWS = 50;
+
+	/**
+	 * 目前使用者的儲存檢視。
+	 *
+	 * @return array
+	 */
+	public static function user_views() {
+		$v = get_user_meta( get_current_user_id(), self::VIEWS_META, true );
+		return is_array( $v ) ? array_values( $v ) : array();
+	}
+
+	/**
+	 * 寫回使用者 meta。
+	 *
+	 * @param array $views
+	 */
+	private static function store_views( $views ) {
+		update_user_meta( get_current_user_id(), self::VIEWS_META, array_values( $views ) );
+	}
+
+	/**
+	 * 正規化檢視的篩選條件（與 param_scope 同一組欄位、同一消毒標準）。
+	 *
+	 * @param mixed $scope
+	 * @return array
+	 */
+	private function sanitize_view_scope( $scope ) {
+		$scope  = is_array( $scope ) ? $scope : array();
+		$folder = isset( $scope['folder_id'] ) ? $scope['folder_id'] : 0;
+		$folder = ( 'none' === $folder ) ? 'none' : (int) $folder;
+
+		$mime = sanitize_text_field( (string) ( isset( $scope['mime_group'] ) ? $scope['mime_group'] : '' ) );
+
+		return array(
+			'folder_id'        => $folder,
+			'include_children' => ! empty( $scope['include_children'] ),
+			'tag_ids'          => array_values( array_unique( array_filter( array_map( 'intval', (array) ( isset( $scope['tag_ids'] ) ? $scope['tag_ids'] : array() ) ) ) ) ),
+			'mime_group'       => in_array( $mime, array( 'image', 'audio', 'video', 'document' ), true ) ? $mime : '',
+			'usage'            => sanitize_text_field( (string) ( isset( $scope['usage'] ) ? $scope['usage'] : '' ) ),
+			'search'           => sanitize_text_field( (string) ( isset( $scope['search'] ) ? $scope['search'] : '' ) ),
+		);
+	}
+
+	/**
+	 * 讀取儲存檢視清單。
+	 */
+	public function views_get() {
+		$this->guard();
+		wp_send_json_success( array( 'views' => self::user_views() ) );
+	}
+
+	/**
+	 * 儲存目前篩選組合為命名檢視（同名覆蓋）。
+	 */
+	public function views_save() {
+		$this->guard();
+
+		$name = sanitize_text_field( (string) $this->param( 'name', '' ) );
+		if ( '' === $name ) {
+			wp_send_json_error( array( 'message' => __( 'Enter a name for this view.', 'plugnest-media-folders' ) ), 400 );
+		}
+		if ( function_exists( 'mb_substr' ) ) {
+			$name = mb_substr( $name, 0, 60, 'UTF-8' );
+		} else {
+			$name = substr( $name, 0, 60 );
+		}
+
+		$scope = json_decode( (string) $this->param( 'scope', '{}' ), true );
+		$scope = $this->sanitize_view_scope( $scope );
+
+		$views = self::user_views();
+
+		if ( count( $views ) >= self::MAX_VIEWS ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %d: maximum number of saved views. */
+						__( 'Too many saved views (limit %d). Delete some first.', 'plugnest-media-folders' ),
+						self::MAX_VIEWS
+					),
+				),
+				400
+			);
+		}
+
+		/* 同名 = 更新（不重複建立）。 */
+		$id = '';
+		foreach ( $views as $k => $v ) {
+			if ( isset( $v['name'] ) && $v['name'] === $name ) {
+				$id                 = (string) $v['id'];
+				$views[ $k ]['scope'] = $scope;
+				break;
+			}
+		}
+
+		if ( '' === $id ) {
+			$id       = bin2hex( random_bytes( 4 ) );
+			$views[]  = array(
+				'id'      => $id,
+				'name'    => $name,
+				'scope'   => $scope,
+				'created' => time(),
+			);
+		}
+
+		self::store_views( $views );
+
+		wp_send_json_success(
+			array(
+				'views'   => self::user_views(),
+				'id'      => $id,
+				'message' => sprintf(
+					/* translators: %s: view name. */
+					__( 'Saved view "%s".', 'plugnest-media-folders' ),
+					$name
+				),
+			)
+		);
+	}
+
+	/**
+	 * 刪除一個儲存檢視。
+	 */
+	public function views_delete() {
+		$this->guard();
+
+		$id    = preg_replace( '/[^0-9a-f]/', '', (string) $this->param( 'id', '' ) );
+		$views = self::user_views();
+		$kept  = array_values(
+			array_filter(
+				$views,
+				static function ( $v ) use ( $id ) {
+					return ! isset( $v['id'] ) || (string) $v['id'] !== $id;
+				}
+			)
+		);
+
+		if ( count( $kept ) === count( $views ) ) {
+			wp_send_json_error( array( 'message' => __( 'View not found.', 'plugnest-media-folders' ) ), 404 );
+		}
+
+		self::store_views( $kept );
+
+		wp_send_json_success(
+			array(
+				'views'   => $kept,
+				'message' => __( 'View deleted.', 'plugnest-media-folders' ),
+			)
+		);
+	}
+
+	/* =========================================================
+	 *  重複檔偵測（只偵測、只報告；清理在 Pro）
+	 * ========================================================= */
+
+	/**
+	 * 分批為缺雜湊的附件計算內容雜湊。
+	 */
+	public function dupe_build() {
+		$this->guard();
+		$this->relax_time_limit();
+
+		$limit = (int) $this->param( 'limit', PNMF_Dupe::CHUNK );
+		$flush = (bool) $this->param( 'rebuild', 0 );
+		$reset = (bool) $this->param( 'reset', 0 );
+
+		if ( $reset ) {
+			delete_option( $this->hash_cancel_key() );
+		}
+
+		/* 重建：第一批先清掉舊雜湊，讓所有附件重新計算。 */
+		if ( $flush ) {
+			PNMF_Dupe::flush();
+		}
+
+		/*
+		 * 每個請求最多算 8 秒，剩下的交回前端續跑；
+		 * 這樣單一檔案很大、或主機磁碟很慢時，也不會卡住整個請求。
+		 */
+		$budget = (float) apply_filters( 'pnmf_hash_budget', 8 );
+
+		$skip = $this->param( 'skip', array() );
+		$skip = is_array( $skip ) ? array_map( 'intval', $skip ) : array();
+
+		if ( $reset ) {
+			update_option( $this->hash_state_key(), array( 'running' => true, 'done' => 0, 'total' => 0, 'current' => '', 'ts' => time() ), false );
+		}
+
+		/* 逐檔寫入狀態，前端輪詢後「已計數」與「正在處理」就是同一份資料。 */
+		$state_key    = $this->hash_state_key();
+		$global_total = PNMF_Dupe::total_count();
+		$last_write   = 0.0;
+		$progress     = function ( $done, $current, $total ) use ( $state_key, &$last_write, $global_total ) {
+			$now = microtime( true );
+			if ( ( $now - $last_write ) < 0.35 ) {
+				return;
+			}
+			$last_write = $now;
+			update_option(
+				$state_key,
+				array(
+					'done'    => (int) $done,
+					'total'   => (int) $global_total,
+					'current' => (string) $current,
+					'running' => true,
+					'ts'      => time(),
+				),
+				false
+			);
+		};
+
+		$result = PNMF_Dupe::build_batch(
+			$limit,
+			$budget,
+			function () {
+				return $this->hash_cancelled();
+			},
+			$skip,
+			$progress
+		);
+
+		update_option(
+			$state_key,
+			array( 'running' => false, 'done' => 0, 'total' => 0, 'current' => '', 'ts' => time() ),
+			false
+		);
+
+		wp_send_json_success( $result );
+	}
+
+	/**
+	 * 中止旗標的 option key（每人一個）。
+	 *
+	 * @return string
+	 */
+	private function hash_cancel_key() {
+		return 'pnmf_hash_cancel_' . get_current_user_id();
+	}
+
+	/**
+	 * 是否已被要求中止（直查 DB，避免物件快取）。
+	 *
+	 * @return bool
+	 */
+	private function hash_cancelled() {
+		global $wpdb;
+
+		$raw = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT option_value FROM {$wpdb->options} WHERE option_name = %s",
+				$this->hash_cancel_key()
+			)
+		);
+
+		return null !== $raw && (bool) maybe_unserialize( $raw );
+	}
+
+	/**
+	 * 目前這一批雜湊的即時狀態（前端每秒輪詢）。
+	 */
+	public function dupe_hash_state() {
+		$this->guard();
+		wp_send_json_success( (array) get_option( $this->hash_state_key(), array() ) );
+	}
+
+	/**
+	 * 雜湊狀態的 option key。
+	 *
+	 * @return string
+	 */
+	private function hash_state_key() {
+		return 'pnmf_hash_state_' . get_current_user_id();
+	}
+
+	/**
+	 * 中止雜湊計算。
+	 */
+	public function dupe_build_cancel() {
+		$this->guard();
+		update_option( $this->hash_cancel_key(), 1, false );
+		wp_send_json_success( array( 'cancelled' => true ) );
+	}
+
+	/**
+	 * 回報重複群組。
+	 */
+	public function dupe_list() {
+		$this->guard();
+		$this->relax_time_limit();
+
+		wp_send_json_success( PNMF_Dupe::groups() );
+	}
+
+	/**
+	 * 查一個附件「被誰引用」：文章內容、特色圖片、Elementor 資料。
+	 *
+	 * 重複檔報告只存 used/unused 旗標，沒有引用清單；這裡在使用者點開某一列時才查，
+	 * 避免 dupe_list 一次對上千個附件做 LIKE。
+	 */
+	public function dupe_refs() {
+		$this->guard();
+
+		$id = (int) $this->param( 'id', 0 );
+		$post = $id ? get_post( $id ) : null;
+		if ( ! $post || 'attachment' !== $post->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Attachment not found.', 'plugnest-media-folders' ) ), 404 );
+		}
+
+		global $wpdb;
+
+		$url   = (string) wp_get_attachment_url( $id );
+		$file  = (string) get_post_meta( $id, '_wp_attached_file', true );
+		$meta  = wp_get_attachment_metadata( $id );
+		$urls  = array( $url );
+
+		/* 各尺寸變體：文章裡可能貼的是縮圖網址。 */
+		if ( is_array( $meta ) && ! empty( $meta['sizes'] ) ) {
+			$base = trailingslashit( dirname( $url ) );
+			foreach ( $meta['sizes'] as $size ) {
+				if ( ! empty( $size['file'] ) ) {
+					$urls[] = $base . $size['file'];
+				}
+			}
+		}
+		$urls = array_values( array_unique( array_filter( $urls ) ) );
+
+		$refs  = array();
+		$roles = array();
+
+		/* 1) 文章／頁面內容。 */
+		$likes = array();
+		$args  = array();
+		foreach ( $urls as $u ) {
+			$likes[] = 'post_content LIKE %s';
+			$args[]  = '%' . $wpdb->esc_like( $u ) . '%';
+		}
+		if ( $likes ) {
+			$sql = "SELECT ID FROM {$wpdb->posts}
+			         WHERE ( " . implode( ' OR ', $likes ) . " )
+			           AND post_type NOT IN ('revision','attachment','auto-draft')
+			           AND post_status NOT IN ('trash','auto-draft')
+			         LIMIT 50";
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$ids = $wpdb->get_col( $wpdb->prepare( $sql, $args ) );
+			foreach ( (array) $ids as $pid ) {
+				$refs[ (int) $pid ] = 'content';
+			}
+		}
+
+		/* 2) 特色圖片。 */
+		$thumb_ids = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				  WHERE meta_key = '_thumbnail_id' AND meta_value = %s
+				  LIMIT 50",
+				(string) $id
+			)
+		);
+		foreach ( (array) $thumb_ids as $pid ) {
+			if ( ! isset( $refs[ (int) $pid ] ) ) {
+				$refs[ (int) $pid ] = 'featured';
+			}
+		}
+
+		/* 3) Elementor 的 id 引用。 */
+		$elementor = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT post_id FROM {$wpdb->postmeta}
+				  WHERE meta_key = '_elementor_data'
+				    AND ( meta_value LIKE %s OR meta_value LIKE %s )
+				  LIMIT 50",
+				'%"id":"' . $id . '"%',
+				'%"id":' . $id . '%'
+			)
+		);
+		foreach ( (array) $elementor as $pid ) {
+			if ( ! isset( $refs[ (int) $pid ] ) ) {
+				$refs[ (int) $pid ] = 'elementor';
+			}
+		}
+
+		$rows = array();
+		foreach ( $refs as $pid => $role ) {
+			$p = get_post( $pid );
+			if ( ! $p ) {
+				continue;
+			}
+			$rows[] = array(
+				'id'     => (int) $pid,
+				'title'  => '' !== $p->post_title ? $p->post_title : __( '(no title)', 'plugnest-media-folders' ),
+				'type'   => $p->post_type,
+				'status' => $p->post_status,
+				'role'   => $role,
+				'edit'   => get_edit_post_link( $pid, 'raw' ),
+				'view'   => 'publish' === $p->post_status ? get_permalink( $pid ) : '',
+			);
+		}
+
+		/* 特色圖片優先，其次 Elementor，最後內文。 */
+		$order = array( 'featured' => 0, 'elementor' => 1, 'content' => 2 );
+		usort(
+			$rows,
+			static function ( $a, $b ) use ( $order ) {
+				$d = ( $order[ $a['role'] ] ?? 9 ) - ( $order[ $b['role'] ] ?? 9 );
+				return 0 !== $d ? $d : $a['id'] - $b['id'];
+			}
+		);
+
+		wp_send_json_success(
+			array(
+				'id'      => $id,
+				'url'     => $url,
+				'file'    => $file,
+				'mime'    => (string) $post->post_mime_type,
+				'size'    => is_array( $meta ) && ! empty( $meta['filesize'] ) ? (int) $meta['filesize'] : 0,
+				'width'   => is_array( $meta ) && ! empty( $meta['width'] ) ? (int) $meta['width'] : 0,
+				'height'  => is_array( $meta ) && ! empty( $meta['height'] ) ? (int) $meta['height'] : 0,
+				'refs'    => $rows,
+				'count'   => count( $rows ),
+				'truncated' => count( $rows ) >= 50,
+			)
+		);
+	}
+
+	/**
+	 * 清除雜湊索引（下次偵測時全部重算）。
+	 */
+	public function dupe_flush() {
+		$this->guard();
+		PNMF_Dupe::flush();
+		wp_send_json_success( array( 'message' => __( 'Duplicate hash index cleared. The next scan will re-hash every file.', 'plugnest-media-folders' ) ) );
 	}
 
 	/* =========================================================

@@ -32,14 +32,18 @@ class PNMF_Admin {
 	/**
 	 * 選單項目。
 	 *
-	 * 圖標用外掛自帶的原創 nest SVG（data URI）：後台深淺色側欄都清晰，
-	 * 不依賴 dashicons、也沒有版權顧慮。
+	 * 圖標用外掛自帶的品牌圖（assets/icon-128.png）「網址」，不是 data URI：
+	 *   - PNG 的 data URI 會被 esc_url() 清成空字串（wp_allowed_protocols 沒有 data:）
+	 *     → <img src="">，圖示直接不見。
+	 *   - SVG 的 data URI 雖然核心會特別處理（改成 background-image），但在選單裡
+	 *     會被渲染成單色，品牌色全失。
+	 * 直接給檔案網址最穩：核心輸出 <img>，尺寸由 assets/css/menu-icon.css 固定成 20×20。
 	 */
 	public function menu() {
 		$icon = 'dashicons-images-alt2';
-		$svg  = PNMF_PATH . 'assets/icon.svg';
-		if ( is_readable( $svg ) ) {
-			$icon = 'data:image/svg+xml;base64,' . base64_encode( (string) file_get_contents( $svg ) );
+		$png  = PNMF_PATH . 'assets/icon-128.png';
+		if ( is_readable( $png ) ) {
+			$icon = PNMF_URL . 'assets/icon-128.png';
 		}
 
 		add_menu_page(
@@ -67,7 +71,65 @@ class PNMF_Admin {
 	 *
 	 * @param string $hook
 	 */
+	/**
+	 * 給 JS 用的翻譯對照表（msgid => 譯文）。
+	 *
+	 * WP 的 wp_set_script_translations 需要 .json 命名完全對上，實務上常常載不到；
+	 * 這裡直接從已載入的 .mo 取字串，透過 wp_localize_script 傳給 JS，最可靠。
+	 *
+	 * @return array
+	 */
+	private function js_i18n_map() {
+		$locale = function_exists( 'determine_locale' ) ? determine_locale() : get_locale();
+		$file   = PNMF_PATH . 'languages/plugnest-media-folders-' . $locale . '.mo';
+
+		if ( ! file_exists( $file ) ) {
+			return array();
+		}
+
+		$keys_file = PNMF_PATH . 'includes/js-i18n-keys.php';
+		if ( ! file_exists( $keys_file ) ) {
+			return array();
+		}
+
+		$mo = new MO();
+		if ( ! $mo->import_from_file( $file ) ) {
+			return array();
+		}
+
+		$map  = array();
+		$keys = include $keys_file;
+		foreach ( (array) $keys as $key ) {
+			if ( isset( $mo->entries[ $key ] ) && ! empty( $mo->entries[ $key ]->translations ) ) {
+				$value = (string) $mo->entries[ $key ]->translations[0];
+				if ( '' !== $value ) {
+					$map[ $key ] = $value;
+				}
+			}
+		}
+
+		return $map;
+	}
+
+	/**
+	 * 是否自動顯示「新增功能在哪裡」導覽（每人可用核取方塊關掉）。
+	 *
+	 * @return bool
+	 */
+	private function should_show_guide() {
+		if ( ! current_user_can( 'upload_files' ) ) {
+			return false;
+		}
+		return ! get_user_meta( get_current_user_id(), 'pnmf_guide_muted', true );
+	}
+
 	public function assets( $hook ) {
+		/*
+		 * 側欄圖示的尺寸修正：選單在每一個後台頁面都會顯示，
+		 * 所以這段不能跟著 is_plugin_page() 一起 return。
+		 */
+		wp_enqueue_style( 'pnmf-menu-icon', PNMF_URL . 'assets/css/menu-icon.css', array(), PNMF_VERSION );
+
 		if ( ! $this->is_plugin_page() ) {
 			return;
 		}
@@ -106,15 +168,19 @@ class PNMF_Admin {
 				'nonce'       => wp_create_nonce( 'pnmf' ),
 				'uploadNonce' => wp_create_nonce( PNMF_Upload::NONCE_ACTION ),
 				'pro'         => PNMF_Plugin::is_pro() ? 1 : 0,
+				'guide'       => $this->should_show_guide() ? 1 : 0,
+				'i18n'        => $this->js_i18n_map(),
 				'buyUrl'      => 'https://media-folders.plugnest.dev/',
 				'proFeatures' => array(
 					__( 'Unused-media cleanup wizard', 'plugnest-media-folders' ),
 					__( 'Missing-alt batch workflow', 'plugnest-media-folders' ),
+					__( 'One-click duplicate cleanup (keep largest or newest)', 'plugnest-media-folders' ),
 					__( 'Folder import/export & import from other folder plugins', 'plugnest-media-folders' ),
 					__( 'Folder access roles', 'plugnest-media-folders' ),
 					__( 'Delete folder together with its files (typed confirmation)', 'plugnest-media-folders' ),
 				),
 				'roles'       => PNMF_Taxonomy::get_role_names(),
+				'views'       => PNMF_Ajax::user_views(),
 				'perPage'     => 60,
 				'folders'     => PNMF_Taxonomy::visible_folder_tree( true ),
 				'tags'        => $this->get_tags(),
@@ -204,6 +270,7 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 			<div class="pnmf-header">
 				<div class="pnmf-header-left">
 					<h1 class="pnmf-title">
+						<img class="pnmf-header-logo" src="<?php echo esc_url( PNMF_URL . 'assets/logo.png' ); ?>" alt="" width="36" height="36">
 						<?php esc_html_e( 'PlugNest Media Folders', 'plugnest-media-folders' ); ?>
 						<span class="pnmf-safe-badge" title="<?php esc_attr_e( 'This plugin only writes classification data; it never moves or rewrites media files.', 'plugnest-media-folders' ); ?>"><?php esc_html_e( 'File paths untouched', 'plugnest-media-folders' ); ?></span>
 					</h1>
@@ -222,6 +289,17 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 					</button>
 					<button type="button" class="button" id="pnmf-btn-scan">
 						<span class="dashicons dashicons-search"></span> <?php esc_html_e( 'Scan usage', 'plugnest-media-folders' ); ?>
+					</button>
+					<?php if ( defined( 'PNMFP_VERSION' ) ) : ?>
+						<a class="button" id="pnmf-btn-ai" href="<?php echo esc_url( admin_url( 'options-general.php?page=pnmf-pro#pnmfp-ai' ) ); ?>" title="<?php esc_attr_e( 'Provider, API key and model used by the AI features', 'plugnest-media-folders' ); ?>">
+							<span class="dashicons dashicons-admin-generic"></span> <?php esc_html_e( 'AI settings', 'plugnest-media-folders' ); ?>
+						</a>
+					<?php endif; ?>
+					<button type="button" class="button" id="pnmf-btn-guide" title="<?php esc_attr_e( 'What is new in 3.0.0 / 2.0.0 and where to find it', 'plugnest-media-folders' ); ?>">
+						<span class="dashicons dashicons-editor-help"></span> <?php esc_html_e( 'Feature guide', 'plugnest-media-folders' ); ?>
+					</button>
+					<button type="button" class="button" id="pnmf-btn-dupe">
+						<span class="dashicons dashicons-clone"></span> <?php esc_html_e( 'Find duplicates', 'plugnest-media-folders' ); ?>
 					</button>
 					<button type="button" class="button" id="pnmf-btn-auto">
 						<span class="dashicons dashicons-networking"></span> <?php esc_html_e( 'Auto-assign', 'plugnest-media-folders' ); ?>
@@ -267,8 +345,14 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 						<button type="button" class="button-link pnmf-mini-link<?php echo esc_attr( $pnmf_pro_locked ); ?>" id="pnmf-import-folders"><?php esc_html_e( 'Import', 'plugnest-media-folders' ); ?></button>
 						<span>·</span>
 						<button type="button" class="button-link pnmf-mini-link<?php echo esc_attr( $pnmf_pro_locked ); ?>" id="pnmf-import-plugins"><?php esc_html_e( 'From plugins', 'plugnest-media-folders' ); ?></button>
+						<span>·</span>
+						<button type="button" class="button-link pnmf-mini-link" id="pnmf-btn-fstats"><?php esc_html_e( 'Stats', 'plugnest-media-folders' ); ?></button>
 					</div>
-								<ul class="pnmf-tree" id="pnmf-tree"></ul>
+								<div class="pnmf-tree-search">
+						<input type="search" id="pnmf-tree-search" placeholder="<?php esc_attr_e( 'Find folder…', 'plugnest-media-folders' ); ?>" title="<?php esc_attr_e( 'Jump to folder (Ctrl+K)', 'plugnest-media-folders' ); ?>">
+						<div class="pnmf-tree-search-results" id="pnmf-tree-search-results" hidden></div>
+					</div>
+					<ul class="pnmf-tree" id="pnmf-tree"></ul>
 
 					<div class="pnmf-panel-head pnmf-panel-head--sub">
 						<span><?php esc_html_e( 'Tags', 'plugnest-media-folders' ); ?></span>
@@ -307,6 +391,22 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 							<option value="size-ASC"><?php esc_html_e( 'File size low→high', 'plugnest-media-folders' ); ?></option>
 							<option value="ID-DESC"><?php esc_html_e( 'ID high→low', 'plugnest-media-folders' ); ?></option>
 						</select>
+
+						<button type="button" class="pnmf-view-btn" id="pnmf-sort-pin" title="<?php esc_attr_e( 'Pin this sort as the current folder\'s default (click again to remove)', 'plugnest-media-folders' ); ?>">
+							<span class="dashicons dashicons-sticky"></span>
+						</button>
+
+						<div class="pnmf-views">
+							<select id="pnmf-views" title="<?php esc_attr_e( 'Saved views', 'plugnest-media-folders' ); ?>">
+								<option value=""><?php esc_html_e( 'Saved views…', 'plugnest-media-folders' ); ?></option>
+							</select>
+							<button type="button" class="pnmf-view-btn" id="pnmf-view-save" title="<?php esc_attr_e( 'Save current filters as a view', 'plugnest-media-folders' ); ?>">
+								<span class="dashicons dashicons-plus-alt2"></span>
+							</button>
+							<button type="button" class="pnmf-view-btn" id="pnmf-view-del" title="<?php esc_attr_e( 'Delete this view', 'plugnest-media-folders' ); ?>">
+								<span class="dashicons dashicons-trash"></span>
+							</button>
+						</div>
 
 						<label class="pnmf-check">
 							<input type="checkbox" id="pnmf-include-children" checked>
@@ -465,6 +565,166 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 			</div>
 		</div>
 
+		<!-- ============ 資料夾統計面板 ============ -->
+		<div class="pnmf-modal" id="pnmf-modal-fstats" hidden>
+			<div class="pnmf-modal-box pnmf-modal-box--wide">
+				<div class="pnmf-modal-head">
+					<h2><?php esc_html_e( 'Folder stats', 'plugnest-media-folders' ); ?></h2>
+					<button type="button" class="pnmf-modal-close" data-close>×</button>
+				</div>
+				<div class="pnmf-modal-body">
+					<div class="pnmf-notice">
+						<?php esc_html_e( 'Per-folder breakdown of media assigned directly to each folder. Sizes come from the file-size index — run "File size" indexing once for accurate numbers.', 'plugnest-media-folders' ); ?>
+					</div>
+					<div id="pnmf-fstats-list"><span class="pnmf-hint"><?php esc_html_e( 'Loading…', 'plugnest-media-folders' ); ?></span></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- ============ 重複檔偵測對話框（偵測免費；清理在 Pro） ============ -->
+		<div class="pnmf-modal" id="pnmf-modal-dupe" hidden>
+			<div class="pnmf-modal-box pnmf-modal-box--wide">
+				<div class="pnmf-modal-head">
+					<h2><?php esc_html_e( 'Duplicate files', 'plugnest-media-folders' ); ?></h2>
+					<button type="button" class="pnmf-modal-close" data-close>×</button>
+				</div>
+				<div class="pnmf-modal-body">
+					<div class="pnmf-notice">
+						<?php esc_html_e( 'Files with identical content are grouped together. This report never deletes anything — review each group and decide yourself.', 'plugnest-media-folders' ); ?>
+					</div>
+					<div id="pnmf-dupe-job" class="pnmf-job" hidden>
+						<div class="pnmf-job-top">
+							<strong id="pnmf-job-count">0 / 0</strong>
+							<span id="pnmf-job-eta" class="pnmf-hint"></span>
+						</div>
+						<div class="pnmf-job-bar"><span id="pnmf-job-fill"></span></div>
+						<div class="pnmf-job-current" id="pnmf-job-file"></div>
+					</div>
+					<div id="pnmf-dupe-banner" class="pnmf-dupe-banner" hidden></div>
+					<div id="pnmf-dupe-result" class="pnmf-dupe-result" hidden></div>
+					<div id="pnmf-dupe-list"><span class="pnmf-hint"><?php esc_html_e( 'Loading…', 'plugnest-media-folders' ); ?></span></div>
+				</div>
+				<div class="pnmf-modal-foot">
+					<button type="button" class="button" id="pnmf-dupe-rebuild" title="<?php esc_attr_e( 'Re-hash every file (slow). Use this if you replaced files outside WordPress.', 'plugnest-media-folders' ); ?>"><?php esc_html_e( 'Re-scan hashes', 'plugnest-media-folders' ); ?></button>
+					<button type="button" class="button" id="pnmf-hash-cancel" hidden><?php esc_html_e( 'Stop', 'plugnest-media-folders' ); ?></button>
+					<span id="pnmf-dupe-free-hint" class="pnmf-dupe-free-hint">
+						<?php esc_html_e( 'One-click cleanup (keep the largest or newest copy) is a', 'plugnest-media-folders' ); ?>
+						<a href="https://media-folders.plugnest.dev/" target="_blank" rel="noopener"><?php esc_html_e( 'Pro feature', 'plugnest-media-folders' ); ?></a>
+					</span>
+					<span id="pnmf-dupe-pro-ctrl" class="pnmf-dupe-pro-ctrl" hidden>
+						<label class="pnmf-check" title="<?php esc_attr_e( 'Tick every copy to be deleted. One copy per group is always kept — if you tick them all, the largest/newest one is kept automatically.', 'plugnest-media-folders' ); ?>"><input type="checkbox" id="pnmf-dupe-checkall"> <?php esc_html_e( 'Select all copies', 'plugnest-media-folders' ); ?></label>
+						<span class="pnmf-hint" id="pnmf-dupe-selcount">0 / 0</span>
+						<span class="pnmf-dupe-sep">|</span>
+						<label class="pnmf-check"><input type="radio" name="pnmf-dupe-keep" value="largest" checked> <?php esc_html_e( 'Keep largest', 'plugnest-media-folders' ); ?></label>
+						<label class="pnmf-check"><input type="radio" name="pnmf-dupe-keep" value="newest"> <?php esc_html_e( 'Keep newest', 'plugnest-media-folders' ); ?></label>
+						<label class="pnmf-check" title="<?php esc_attr_e( 'By default, copies that are referenced by posts — or that have never been usage-scanned — are never deleted.', 'plugnest-media-folders' ); ?>"><input type="checkbox" id="pnmf-dupe-include-used"> <?php esc_html_e( 'Also delete copies in use / not yet scanned', 'plugnest-media-folders' ); ?></label>
+						<label class="pnmf-check" title="<?php esc_attr_e( 'Before deleting, all references (posts, Elementor, featured images) are rewritten to the kept copy — no dead images.', 'plugnest-media-folders' ); ?>"><input type="checkbox" id="pnmf-dupe-rewrite" checked> <?php esc_html_e( 'Rewrite links to the kept copy (recommended)', 'plugnest-media-folders' ); ?></label>
+						<button type="button" class="button" id="pnmf-dupe-cancel" hidden><?php esc_html_e( 'Stop', 'plugnest-media-folders' ); ?></button>
+						<button type="button" class="button button-primary pnmf-danger-btn" id="pnmf-dupe-clean"><?php esc_html_e( 'Clean up duplicates', 'plugnest-media-folders' ); ?></button>
+					</span>
+					<button type="button" class="button-link" data-close><?php esc_html_e( 'Close', 'plugnest-media-folders' ); ?></button>
+				</div>
+			</div>
+		</div>
+
+		<!-- ============ 功能導覽（3.0.0 / 2.0.0 新增內容） ============ -->
+		<div class="pnmf-modal" id="pnmf-modal-guide" hidden>
+			<div class="pnmf-modal-box pnmf-modal-box--wide">
+				<div class="pnmf-modal-head">
+					<h2><?php esc_html_e( 'What is new — and where to find it', 'plugnest-media-folders' ); ?></h2>
+					<button type="button" class="pnmf-modal-close" data-close>×</button>
+				</div>
+				<div class="pnmf-modal-body">
+					<p class="pnmf-guide-intro"><?php esc_html_e( 'One minute. Each line tells you where the control sits on this screen.', 'plugnest-media-folders' ); ?></p>
+					<div class="pnmf-guide-grid">
+						<div class="pnmf-guide-col">
+							<h3><span class="pnmf-guide-tier"><?php esc_html_e( 'Free', 'plugnest-media-folders' ); ?></span> <?php esc_html_e( '3.0.0 additions', 'plugnest-media-folders' ); ?></h3>
+							<p class="pnmf-guide-note"><?php esc_html_e( 'Included in the free plugin — no licence needed.', 'plugnest-media-folders' ); ?></p>
+							<ul class="pnmf-guide-list">
+								<li>
+									<strong><?php esc_html_e( 'Duplicate detection', 'plugnest-media-folders' ); ?> <code>Find duplicates</code></strong>
+									<span><?php esc_html_e( 'Toolbar, top right. Groups identical files by content hash with thumbnails, sizes and usage badges. Read-only.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Folder stats', 'plugnest-media-folders' ); ?> <code>Stats</code></strong>
+									<span><?php esc_html_e( 'Bottom of the left folder panel. Media count, type breakdown and disk usage per folder, sortable by size.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Per-folder default sort', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Pin icon next to the “Sort” dropdown. Pins the current order to the selected folder; click again to remove.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Saved views', 'plugnest-media-folders' ); ?> <code>views</code></strong>
+									<span><?php esc_html_e( 'Dropdown on the filter row plus the save icon beside it. Store any filter combination as a one-click view.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Quick folder search', 'plugnest-media-folders' ); ?> <code>Ctrl+K</code></strong>
+									<span><?php esc_html_e( '“Find folder…” box on the left panel. Type to jump straight to a folder.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'EXIF auto-fill', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'No button — titles and descriptions are filled from EXIF on upload when the field is empty.', 'plugnest-media-folders' ); ?></span>
+								</li>
+							</ul>
+						</div>
+						<div class="pnmf-guide-col<?php echo PNMF_Plugin::is_pro() ? '' : ' is-locked'; ?>"<?php echo PNMF_Plugin::is_pro() ? '' : ' aria-disabled="true"'; ?>>
+							<h3><span class="pnmf-guide-tier is-pro">Pro</span> <?php esc_html_e( '2.0.0 additions', 'plugnest-media-folders' ); ?></h3>
+							<?php if ( PNMF_Plugin::is_pro() ) : ?>
+								<p class="pnmf-guide-note"><?php esc_html_e( 'Pro add-on features — an active licence is required.', 'plugnest-media-folders' ); ?></p>
+							<?php else : ?>
+								<p class="pnmf-guide-note pnmf-guide-note--locked">
+									<strong><?php esc_html_e( 'You have the free version only', 'plugnest-media-folders' ); ?></strong> —
+									<?php esc_html_e( 'the locations below do not exist on this screen until the Pro add-on is installed and activated.', 'plugnest-media-folders' ); ?>
+									<a href="https://media-folders.plugnest.dev/" target="_blank" rel="noopener"><?php esc_html_e( 'See Pro', 'plugnest-media-folders' ); ?></a>
+								</p>
+							<?php endif; ?>
+							<ul class="pnmf-guide-list">
+								<li>
+									<strong><?php esc_html_e( 'Duplicate cleanup with checkboxes', 'plugnest-media-folders' ); ?> <code>Clean up duplicates</code></strong>
+									<span><?php esc_html_e( '“Find duplicates” → tick the copies to delete → “Clean up duplicates”. One copy per group is always kept; runs in batches with a progress bar and a Stop button.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Replace media file', 'plugnest-media-folders' ); ?> <code>Replace file</code></strong>
+									<span><?php esc_html_e( 'Right-hand inspector when a single item is selected. Swaps the file but keeps the URL.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'ZIP download', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Select media → bulk bar → “Download ZIP”.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Activity log CSV', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Toolbar → “Activity log” → “Export CSV”.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Weekly report & scheduled re-run', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Settings → PlugNest Media Folders Pro, below the licence table.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Folder access roles', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Folder row “⋯” menu → “Roles”.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'Import / export folders', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( 'Left panel header → “Export”, “Import”, “From plugins”.', 'plugnest-media-folders' ); ?></span>
+								</li>
+								<li>
+									<strong><?php esc_html_e( 'AI alt / tags / folders', 'plugnest-media-folders' ); ?></strong>
+									<span><?php esc_html_e( '“Missing alt” → “Fill with AI”; bulk bar → “AI tags” / “AI folders”. API key: “AI settings” in the toolbar.', 'plugnest-media-folders' ); ?></span>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+				<div class="pnmf-modal-foot pnmf-guide-foot">
+					<label class="pnmf-check"><input type="checkbox" id="pnmf-guide-mute" checked> <?php esc_html_e( 'Do not show this automatically next time', 'plugnest-media-folders' ); ?></label>
+					<?php if ( defined( 'PNMFP_VERSION' ) ) : ?>
+						<a class="button-link" id="pnmf-guide-more" href="<?php echo esc_url( admin_url( 'options-general.php?page=pnmf-pro#pnmfp-features' ) ); ?>"><?php esc_html_e( 'Full list in Settings', 'plugnest-media-folders' ); ?></a>
+					<?php endif; ?>
+					<button type="button" class="button button-primary" id="pnmf-guide-close"><?php esc_html_e( 'Got it', 'plugnest-media-folders' ); ?></button>
+				</div>
+			</div>
+		</div>
+
 		<!-- ============ Pro 購買引導 ============ -->
 		<div class="pnmf-modal" id="pnmf-modal-upsell" hidden>
 			<div class="pnmf-modal-box">
@@ -477,6 +737,7 @@ Media and physical files inside are kept; subfolders move up one level.', 'plugn
 					<ul id="pnmf-upsell-features" style="margin:8px 0 12px 18px;list-style:disc">
 						<li><?php esc_html_e( 'Unused-media cleanup wizard', 'plugnest-media-folders' ); ?></li>
 						<li><?php esc_html_e( 'Missing-alt batch workflow', 'plugnest-media-folders' ); ?></li>
+						<li><?php esc_html_e( 'One-click duplicate cleanup (keep largest or newest)', 'plugnest-media-folders' ); ?></li>
 						<li><?php esc_html_e( 'Folder import/export & import from other folder plugins', 'plugnest-media-folders' ); ?></li>
 						<li><?php esc_html_e( 'Folder access roles', 'plugnest-media-folders' ); ?></li>
 						<li><?php esc_html_e( 'Delete folder together with its files (typed confirmation)', 'plugnest-media-folders' ); ?></li>

@@ -3,7 +3,7 @@
  * Plugin Name:       PlugNest Media Folders
  * Plugin URI:        https://media-folders.plugnest.dev/
  * Description:       Media library management: virtual folders (hierarchical, role-restricted), tags, batch editing, usage scanning, unused cleanup, missing-alt workflow, folder import/export, in-page upload, and Elementor/Gutenberg media modal integration. Never touches file paths.
- * Version:           2.5.4
+ * Version:           3.0.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            PlugNest
@@ -16,7 +16,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'PNMF_VERSION', '2.5.4' );
+define( 'PNMF_VERSION', '3.0.0' );
 define( 'PNMF_FILE', __FILE__ );
 define( 'PNMF_PATH', plugin_dir_path( __FILE__ ) );
 define( 'PNMF_URL', plugin_dir_url( __FILE__ ) );
@@ -63,6 +63,10 @@ define( 'PNMF_META_USAGE_AT', '_pnmf_usage_at' );
 require_once PNMF_PATH . 'includes/class-pnmf-taxonomy.php';
 require_once PNMF_PATH . 'includes/class-pnmf-log.php';
 require_once PNMF_PATH . 'includes/class-pnmf-usage.php';
+require_once PNMF_PATH . 'includes/class-pnmf-dupe.php';
+require_once PNMF_PATH . 'includes/class-pnmf-exif.php';
+require_once PNMF_PATH . 'includes/class-pnmf-cli.php';
+PNMF_Exif::init();
 require_once PNMF_PATH . 'includes/class-pnmf-query.php';
 require_once PNMF_PATH . 'includes/class-pnmf-auto.php';
 require_once PNMF_PATH . 'includes/class-pnmf-ajax.php';

@@ -220,6 +220,8 @@ class PNMF_Log {
 			'usage_scan'     => __( 'Usage scan', 'plugnest-media-folders' ),
 			'media_delete'   => __( 'Delete media', 'plugnest-media-folders' ),
 			'delete_files'   => __( 'Delete media with folder', 'plugnest-media-folders' ),
+			'dupe_cleanup'   => __( 'Delete duplicate media', 'plugnest-media-folders' ),
+			'media_replace'  => __( 'Replace media file', 'plugnest-media-folders' ),
 		);
 		return isset( $map[ $action ] ) ? $map[ $action ] : $action;
 	}

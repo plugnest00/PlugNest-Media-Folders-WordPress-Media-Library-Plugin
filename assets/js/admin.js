@@ -20,10 +20,17 @@
 	 * 而 '0' 在 JS 是 truthy）——不正規化的話，免費版的 Pro 鎖定樣式、
 	 * upsell 彈窗攔截與 Pro UI 綁定全部會失準。 */
 	CFG.pro = ( '1' === CFG.pro || 1 === CFG.pro || true === CFG.pro );
+	/* 同一個坑：'0' 是 truthy，導覽旗標也要正規化，否則關不掉。 */
+	CFG.guide = ( '1' === CFG.guide || 1 === CFG.guide || true === CFG.guide );
 
 	/* wp.i18n（PHP 端已把 wp-i18n 註冊為依賴）；帶後備避免載入順序問題。 */
 	const i18n = window.wp && window.wp.i18n ? window.wp.i18n : {};
-	const __ = i18n.__ || function ( s ) { return s; };
+	const __ = function ( text, domain ) {
+		if ( CFG.i18n && Object.prototype.hasOwnProperty.call( CFG.i18n, text ) ) {
+			return CFG.i18n[ text ];
+		}
+		return i18n.__ ? i18n.__( text, domain || 'plugnest-media-folders' ) : text;
+	};
 	const sprintf = i18n.sprintf || function ( s ) { return s; };
 
 	/* =========================================================
@@ -55,6 +62,7 @@
 		collapsed: new Set(),
 		folders: CFG.folders || [],
 		tags: CFG.tags || [],
+		views: Array.isArray( CFG.views ) ? CFG.views : [],
 		stats: CFG.stats || {},
 		rules: CFG.rules || [],
 		folderPaths: CFG.folderPaths || [],
@@ -513,7 +521,11 @@
 			.map( ( item ) => {
 				const isSelected = state.selectAll || state.selected.has( item.id );
 				const thumb = item.thumb
-					? '<img src="' + esc( item.thumb ) + '" alt="" loading="lazy">'
+					/* draggable="false"：<img> 預設可拖，拖它時瀏覽器會在
+					 * dataTransfer 塞入一個虛擬檔案（types 含 Files），
+					 * 讓拖曳長得像「從桌面拖檔案進來」。關掉之後，拖縮圖
+					 * 一律由外層 .pnmf-card[draggable] 接手，型別乾淨。 */
+					? '<img src="' + esc( item.thumb ) + '" alt="" loading="lazy" draggable="false">'
 					: '<span class="dashicons ' + iconOf( item.type ) + ' pnmf-card-icon"></span>';
 
 				let flags = '';
@@ -699,9 +711,14 @@
 	/**
 	 * 把目前選取（或正在拖曳）的媒體移動到指定資料夾（replace 語意）。
 	 * 資料夾磚的投放目標；左側樹的 drop 走同一端點。
+	 *
+	 * @param {number}        folderId 目標資料夾 term_id。
+	 * @param {DragEvent|null} evt      drop 事件（用來從 dataTransfer 還原 ID 清單）。
 	 */
-	async function moveSelectionToFolder( folderId ) {
-		const ids = state.dragIds && state.dragIds.length ? state.dragIds : selectedIds();
+	async function moveSelectionToFolder( folderId, evt ) {
+		const ids = ( state.dragIds && state.dragIds.length )
+			? state.dragIds
+			: ( ( evt && internalIds( evt ) ) || selectedIds() );
 		const selectAll = state.selectAll && ! state.dragIds ? 1 : 0;
 		state.dragIds = null;
 		if ( ! ids.length && ! selectAll ) {
@@ -1043,6 +1060,34 @@
 
 	function selectedIds() {
 		return state.selectAll ? [] : Array.from( state.selected );
+	}
+
+	/**
+	 * 從 dataTransfer 讀回內部拖曳的媒體 ID（採用自訂型別
+	 * application/x-pnmf-media，由卡片 dragstart 寫入）。
+	 *
+	 * 正常情況用不到（state.dragIds 有值）；這是 dragstart 沒跑到、
+	 * 或狀態被別處清掉時的還原路徑。dragover 期間瀏覽器基於安全
+	 * 不給 getData，只有 drop 事件讀得到內容。
+	 *
+	 * @param {DragEvent} e
+	 * @return {number[]|null}
+	 */
+	function internalIds( e ) {
+		try {
+			const raw = e.dataTransfer && e.dataTransfer.getData( 'application/x-pnmf-media' );
+			if ( ! raw ) {
+				return null;
+			}
+			const ids = JSON.parse( raw );
+			if ( ! Array.isArray( ids ) ) {
+				return null;
+			}
+			const clean = ids.map( ( v ) => parseInt( v, 10 ) ).filter( ( v ) => v > 0 );
+			return clean.length ? clean : null;
+		} catch ( err ) {
+			return null;
+		}
 	}
 
 	/**
@@ -1883,6 +1928,212 @@
 	}
 
 	/* =========================================================
+	 *  資料夾統計面板
+	 * ========================================================= */
+
+	function fmtBytesLocal( n ) {
+		n = parseInt( n, 10 ) || 0;
+		if ( n < 1024 ) { return n + ' B'; }
+		if ( n < 1048576 ) { return ( n / 1024 ).toFixed( 1 ) + ' KB'; }
+		if ( n < 1073741824 ) { return ( n / 1048576 ).toFixed( 1 ) + ' MB'; }
+		return ( n / 1073741824 ).toFixed( 2 ) + ' GB';
+	}
+
+	async function openFolderStats() {
+		openModal( '#pnmf-modal-fstats' );
+		const box = $( '#pnmf-fstats-list' );
+		box.innerHTML = '<span class="pnmf-hint">' + __( 'Loading…', 'plugnest-media-folders' ) + '</span>';
+
+		const nameOf = {};
+		let walk = ( list ) => ( list || [] ).forEach( ( f ) => {
+			nameOf[ f.term_id ] = ( f.depth > 0 ? '　'.repeat( f.depth ) : '' ) + f.name;
+			if ( f.children && f.children.length ) {
+				walk( f.children );
+			}
+		} );
+		walk( state.folders );
+
+		try {
+			const data = await api( 'folder_stats', {} );
+			const stats = data.stats || {};
+			const rows = Object.keys( stats )
+				.map( ( k ) => Object.assign( { term_id: parseInt( k, 10 ) }, stats[ k ] ) )
+				.sort( ( a, b ) => b.bytes - a.bytes || b.total - a.total );
+
+			if ( ! rows.length ) {
+				box.innerHTML = '<div class="pnmf-empty">' + __( 'No media assigned yet.', 'plugnest-media-folders' ) + '</div>';
+				return;
+			}
+
+			box.innerHTML =
+				'<table class="pnmf-fstats-table"><thead><tr>' +
+				'<th>' + __( 'Folder', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Media', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Images', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Videos', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Audio', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Docs', 'plugnest-media-folders' ) + '</th>' +
+				'<th>' + __( 'Size', 'plugnest-media-folders' ) + '</th>' +
+				'</tr></thead><tbody>' +
+				rows
+					.map(
+						( r ) =>
+							'<tr>' +
+							'<td>' + esc( nameOf[ r.term_id ] || ( 'ID ' + r.term_id ) ) + '</td>' +
+							'<td>' + r.total + '</td>' +
+							'<td>' + r.images + '</td>' +
+							'<td>' + r.videos + '</td>' +
+							'<td>' + r.audio + '</td>' +
+							'<td>' + r.other + '</td>' +
+							'<td>' + fmtBytesLocal( r.bytes ) + '</td>' +
+							'</tr>'
+					)
+					.join( '' ) +
+				'</tbody></table>';
+		} catch ( e ) {
+			box.innerHTML = '<div class="pnmf-empty">' + esc( e.message ) + '</div>';
+		}
+	}
+
+	/* =========================================================
+	 *  智慧篩選器（儲存的檢視；per-user）
+	 * ========================================================= */
+
+	const SORTS = [ 'date-DESC', 'date-ASC', 'title-ASC', 'title-DESC', 'size-DESC', 'size-ASC', 'ID-DESC' ];
+
+	function findFolderNode( termId ) {
+		return state.folders.find( ( f ) => f.term_id === termId ) || null;
+	}
+
+	/** 進入資料夾時套用其預設排序（若有）。 */
+	function applyFolderSort() {
+		if ( typeof state.folderId !== 'number' || state.folderId <= 0 ) {
+			return;
+		}
+		const node = findFolderNode( state.folderId );
+		if ( node && node.sort && SORTS.indexOf( node.sort ) >= 0 ) {
+			state.sort = node.sort;
+			const sel = $( '#pnmf-sort' );
+			if ( sel ) {
+				sel.value = node.sort;
+			}
+		}
+	}
+
+	async function pinFolderSort() {
+		if ( typeof state.folderId !== 'number' || state.folderId <= 0 ) {
+			toast( __( 'Open a folder first to pin its default sort.', 'plugnest-media-folders' ), 'error' );
+			return;
+		}
+		const node = findFolderNode( state.folderId );
+		if ( ! node ) {
+			return;
+		}
+
+		const removing = node.sort === state.sort;
+		try {
+			const d = await api( 'folder_sort', {
+				term_id: state.folderId,
+				sort: removing ? '' : state.sort,
+			} );
+			node.sort = removing ? '' : state.sort;
+			toast( d.message || ( removing ? __( 'Folder default sort removed.', 'plugnest-media-folders' ) : __( 'Folder default sort saved.', 'plugnest-media-folders' ) ), 'ok' );
+		} catch ( e ) {
+			toast( e.message, 'error' );
+		}
+	}
+
+	function renderViews() {
+		const sel = $( '#pnmf-views' );
+		if ( ! sel ) {
+			return;
+		}
+		const current = sel.value;
+		let html = '<option value="">' + __( 'Saved views…', 'plugnest-media-folders' ) + '</option>';
+		html += state.views
+			.map( ( v ) => '<option value="' + esc( v.id ) + '">' + esc( v.name ) + '</option>' )
+			.join( '' );
+		sel.innerHTML = html;
+		if ( current ) {
+			sel.value = current;
+		}
+	}
+
+	/** 套用檢視：state + 控制項同步後重新載入。 */
+	function applyView( id ) {
+		const v = state.views.find( ( x ) => x.id === id );
+		if ( ! v || ! v.scope ) {
+			return;
+		}
+		const s = v.scope;
+
+		state.folderId = ( 'none' === s.folder_id ) ? 'none' : ( parseInt( s.folder_id, 10 ) || 0 );
+		state.includeChildren = ( s.include_children === 0 || s.include_children === false ) ? false : true;
+		state.tagIds = Array.isArray( s.tag_ids ) ? s.tag_ids.map( Number ) : [];
+		state.mimeGroup = s.mime_group || '';
+		state.usage = s.usage || '';
+		state.search = s.search || '';
+
+		const search = $( '#pnmf-search' );
+		if ( search ) { search.value = state.search; }
+		const type = $( '#pnmf-type' );
+		if ( type ) { type.value = state.mimeGroup; }
+		const usage = $( '#pnmf-usage' );
+		if ( usage ) { usage.value = state.usage; }
+		const kids = $( '#pnmf-include-children' );
+		if ( kids ) { kids.checked = state.includeChildren; }
+
+		renderTree();
+		renderTags();
+		renderFoldersBar();
+
+		state.paged = 1;
+		state.selected.clear();
+		state.selectAll = false;
+		renderBulkbar();
+		loadMedia();
+	}
+
+	async function saveView() {
+		const name = window.prompt( __( 'Name this view (the current filters will be saved):', 'plugnest-media-folders' ) );
+		if ( ! name || ! name.trim() ) {
+			return;
+		}
+		try {
+			const d = await api( 'views_save', {
+				name: name.trim(),
+				scope: JSON.stringify( currentScope() ),
+			} );
+			state.views = d.views || [];
+			renderViews();
+			$( '#pnmf-views' ).value = d.id || '';
+			toast( d.message || sprintf( __( 'Saved view "%s".', 'plugnest-media-folders' ), name.trim() ), 'ok' );
+		} catch ( e ) {
+			toast( e.message, 'error' );
+		}
+	}
+
+	async function deleteView() {
+		const id = $( '#pnmf-views' ).value;
+		if ( ! id ) {
+			toast( __( 'Select a view to delete first.', 'plugnest-media-folders' ), 'error' );
+			return;
+		}
+		const v = state.views.find( ( x ) => x.id === id );
+		if ( ! window.confirm( sprintf( __( 'Delete the view "%s"?', 'plugnest-media-folders' ), v ? v.name : id ) ) ) {
+			return;
+		}
+		try {
+			const d = await api( 'views_delete', { id } );
+			state.views = d.views || [];
+			renderViews();
+			toast( d.message || __( 'View deleted.', 'plugnest-media-folders' ), 'ok' );
+		} catch ( e ) {
+			toast( e.message, 'error' );
+		}
+	}
+
+	/* =========================================================
 	 *  使用狀態掃描
 	 * ========================================================= */
 
@@ -1919,6 +2170,548 @@
 			toast( e.message, 'error' );
 		}
 	}
+
+	/* =========================================================
+	 *  重複檔偵測（偵測免費；清理按鈕只在 Pro 授權下由 pro-admin.js 綁定）
+	 * ========================================================= */
+
+	/** 位元組 → 可讀字串。 */
+	function fmtBytes( n ) {
+		n = parseInt( n, 10 ) || 0;
+		if ( n < 1024 ) { return n + ' B'; }
+		if ( n < 1048576 ) { return ( n / 1024 ).toFixed( 1 ) + ' KB'; }
+		if ( n < 1073741824 ) { return ( n / 1048576 ).toFixed( 1 ) + ' MB'; }
+		return ( n / 1073741824 ).toFixed( 2 ) + ' GB';
+	}
+
+	let lastDupeData = null;
+
+	/** 目前選擇的保留策略（Pro 控制區的無線電；免費版固定 largest）。 */
+	function dupeStrategy() {
+		const r = document.querySelector( 'input[name="pnmf-dupe-keep"]:checked' );
+		return r && r.value === 'newest' ? 'newest' : 'largest';
+	}
+
+	/** 同組內依策略選出「預設保留」的那一份（與後端規則一致）。 */
+	function dupeKeeperId( items, strategy ) {
+		let best = null;
+		( items || [] ).forEach( ( it ) => {
+			if ( ! best ) { best = it; return; }
+			if ( strategy === 'newest' ) {
+				const at = it.ts || 0, bt = best.ts || 0;
+				if ( at > bt || ( at === bt && it.id < best.id ) ) { best = it; }
+			} else {
+				const as = it.size || 0, bs = best.size || 0;
+				if ( as > bs || ( as === bs && it.id < best.id ) ) { best = it; }
+			}
+		} );
+		return best ? best.id : 0;
+	}
+
+	/** 更新「已勾選 / 總數」與全選框狀態。 */
+	function updateDupeCount() {
+		const all = document.querySelectorAll( '.pnmf-dupe-del' );
+		const checked = document.querySelectorAll( '.pnmf-dupe-del:checked' );
+		const counter = document.getElementById( 'pnmf-dupe-selcount' );
+		if ( counter ) {
+			counter.textContent = checked.length + ' / ' + all.length;
+		}
+		const box = document.getElementById( 'pnmf-dupe-checkall' );
+		if ( box ) {
+			box.checked = all.length > 0 && checked.length === all.length;
+			box.indeterminate = checked.length > 0 && checked.length < all.length;
+		}
+	}
+
+	const refsCache = new Map();
+
+	/** 引用明細：檔案網址＋引用它的文章／頁面（可點去編輯）。 */
+	function refsHtml( d ) {
+		const dims = ( d.width && d.height ) ? d.width + ' × ' + d.height : '';
+		const size = d.size ? fmtBytes( d.size ) : '';
+		let html = '<div class="pnmf-refs-head">' +
+			'<code>' + esc( d.url ) + '</code>' +
+			'<a class="button button-small" target="_blank" rel="noopener" href="' + esc( d.url ) + '">' + __( 'Open', 'plugnest-media-folders' ) + '</a>' +
+			'<span class="pnmf-hint">' + esc( [ dims, d.mime, size ].filter( Boolean ).join( ' · ' ) ) + '</span>' +
+			'</div>';
+
+		if ( ! d.count ) {
+			return html + '<p class="pnmf-hint">' + __( 'No references found — the file may be used in custom fields, CSS backgrounds, or external embeds.', 'plugnest-media-folders' ) + '</p>';
+		}
+
+		const roleLabel = {
+			featured: __( 'Featured image', 'plugnest-media-folders' ),
+			elementor: 'Elementor',
+			content: __( 'Post content', 'plugnest-media-folders' ),
+		};
+		html += '<ul class="pnmf-refs-list">';
+		d.refs.forEach( ( r ) => {
+			html += '<li>' +
+				'<span class="pnmf-refs-role is-' + esc( r.role ) + '">' + esc( roleLabel[ r.role ] || r.role ) + '</span>' +
+				'<a href="' + esc( r.edit ) + '">' + esc( r.title ) + '</a>' +
+				'<span class="pnmf-hint">' + esc( r.type + ' · ' + r.status ) + '</span>' +
+				( r.view ? '<a class="pnmf-refs-view" href="' + esc( r.view ) + '" target="_blank" rel="noopener">' + __( 'View', 'plugnest-media-folders' ) + '</a>' : '' ) +
+				'</li>';
+		} );
+		html += '</ul>';
+		if ( d.truncated ) {
+			html += '<p class="pnmf-hint">' + __( 'Only the first 50 references are listed.', 'plugnest-media-folders' ) + '</p>';
+		}
+		return html;
+	}
+
+	/** 展開／收起某一列的引用明細。 */
+	async function toggleDupeRefs( btn ) {
+		const id = parseInt( btn.getAttribute( 'data-id' ), 10 );
+		const row = btn.closest( '.pnmf-dupe-row' );
+		if ( ! row || ! id ) { return; }
+
+		const next = row.nextElementSibling;
+		if ( next && next.classList && next.classList.contains( 'pnmf-dupe-refs' ) ) {
+			next.remove();
+			return;
+		}
+
+		const panel = document.createElement( 'div' );
+		panel.className = 'pnmf-dupe-refs';
+		panel.innerHTML = '<span class="pnmf-hint">' + __( 'Loading references…', 'plugnest-media-folders' ) + '</span>';
+		row.insertAdjacentElement( 'afterend', panel );
+
+		try {
+			const data = refsCache.has( id ) ? refsCache.get( id ) : await api( 'dupe_refs', { id: id } );
+			refsCache.set( id, data );
+			panel.innerHTML = refsHtml( data );
+		} catch ( e ) {
+			panel.innerHTML = '<span class="pnmf-hint">' + esc( e.message ) + '</span>';
+		}
+	}
+
+	/** 統計「使用中 / 未掃描」數量（決定要不要顯示保護提示）。 */
+	function dupeUsageCounts( groups ) {
+		let unscanned = 0;
+		let inUse = 0;
+		( groups || [] ).forEach( ( g ) => {
+			( g.items || [] ).forEach( ( it ) => {
+				const u = ( null === it.usage || typeof it.usage === 'undefined' ) ? '' : String( it.usage );
+				if ( '' === u ) { unscanned++; } else if ( '1' === u ) { inUse++; }
+			} );
+		} );
+		return { unscanned: unscanned, inUse: inUse };
+	}
+
+	/** 保護提示：告訴使用者「為什麼刪不掉」以及一鍵放行。 */
+	function dupeBannerHtml( groups ) {
+		if ( ! CFG.pro ) { return ''; }
+		const c = dupeUsageCounts( groups );
+		if ( ! c.inUse && ! c.unscanned ) { return ''; }
+
+		const allow = document.getElementById( 'pnmf-dupe-include-used' );
+		if ( allow && allow.checked ) {
+			return '<div class="pnmf-dupe-unscanned is-allowed"><strong>' +
+				__( 'In-use / unscanned copies are allowed. Post links will be rewritten to the kept copy.', 'plugnest-media-folders' ) +
+				'</strong></div>';
+		}
+
+		const parts = [];
+		if ( c.inUse ) {
+			parts.push( 1 === c.inUse
+				? __( '1 copy is in use', 'plugnest-media-folders' )
+				: sprintf( __( '%d copies are in use', 'plugnest-media-folders' ), c.inUse ) );
+		}
+		if ( c.unscanned ) {
+			parts.push( 1 === c.unscanned
+				? __( '1 has never been scanned', 'plugnest-media-folders' )
+				: sprintf( __( '%d have never been scanned', 'plugnest-media-folders' ), c.unscanned ) );
+		}
+
+		return '<div class="pnmf-dupe-unscanned"><strong>' +
+			parts.join( ' · ' ) + ' — ' + __( 'protected by default.', 'plugnest-media-folders' ) +
+			'</strong><button type="button" class="button button-small" id="pnmf-dupe-allow-used">' +
+			__( 'Allow deleting them', 'plugnest-media-folders' ) + '</button>' +
+			( c.unscanned
+				? '<button type="button" class="button-link" id="pnmf-dupe-scan-first">' + __( 'Scan usage first', 'plugnest-media-folders' ) + '</button>'
+				: '' ) +
+			'<span class="pnmf-hint">' + __( 'Links in posts are rewritten to the kept copy.', 'plugnest-media-folders' ) + '</span></div>';
+	}
+
+	/** 只更新提示區，不動勾選狀態。 */
+	function renderDupeBanner( groups ) {
+		const box = document.getElementById( 'pnmf-dupe-banner' );
+		if ( ! box ) { return; }
+		const html = dupeBannerHtml( groups );
+		box.innerHTML = html;
+		box.hidden = ! html;
+	}
+
+	/** 渲染重複群組；Pro 才有勾選框（預設只勾「非保留者」）。 */
+	function renderDupeList( data ) {
+		const list = $( '#pnmf-dupe-list' );
+		if ( ! list ) { return; }
+		const groups = ( data && data.groups ) || [];
+
+		if ( ! groups.length ) {
+			list.innerHTML = '<div class="pnmf-empty">' + __( 'Great! No duplicate files were found.', 'plugnest-media-folders' ) + '</div>';
+			updateDupeCount();
+			return;
+		}
+
+		const usageBadge = ( u ) => {
+			if ( u === '1' ) { return '<span class="pnmf-dupe-badge is-used">' + __( 'In use', 'plugnest-media-folders' ) + '</span>'; }
+			if ( u === '0' ) { return '<span class="pnmf-dupe-badge is-unused">' + __( 'Unused', 'plugnest-media-folders' ) + '</span>'; }
+			return '<span class="pnmf-dupe-badge">' + __( 'Not scanned', 'plugnest-media-folders' ) + '</span>';
+		};
+
+		const strategy = dupeStrategy();
+
+		list.innerHTML = groups.map( ( g ) => {
+			const items = g.items || [];
+			const total = items.reduce( ( a, it ) => a + ( it.size || 0 ), 0 );
+			const keeperId = dupeKeeperId( items, strategy );
+
+			const rows = items.map( ( it ) => {
+				const isKeeper = it.id === keeperId;
+				const pick = ( CFG.pro && ! it.blocked )
+					? '<label class="pnmf-dupe-pick" title="' + esc( __( 'Tick the copies you want to delete', 'plugnest-media-folders' ) ) + '">' +
+						'<input type="checkbox" class="pnmf-dupe-del" value="' + it.id + '"' + ( isKeeper ? '' : ' checked' ) + '></label>'
+					: '';
+
+				return (
+					'<div class="pnmf-dupe-row' + ( isKeeper ? ' is-keeper' : '' ) + '"' + ( it.blocked ? ' data-blocked="1"' : '' ) + '>' +
+					pick +
+					( it.thumb
+						? '<img class="pnmf-dupe-thumb" src="' + esc( it.thumb ) + '" alt="">'
+						: '<span class="dashicons dashicons-media-default pnmf-dupe-thumb"></span>' ) +
+					'<div class="pnmf-dupe-main">' +
+					'<div class="pnmf-dupe-name">' + esc( it.filename || it.title || ( 'ID ' + it.id ) ) +
+					( isKeeper && CFG.pro ? ' <span class="pnmf-dupe-badge is-keeper">' + __( 'Keep', 'plugnest-media-folders' ) + '</span>' : '' ) +
+					'</div>' +
+					'<div class="pnmf-dupe-meta">ID ' + it.id +
+					' · ' + esc( it.date ) +
+					' · ' + fmtBytes( it.size ) +
+					'　' + usageBadge( it.usage ) +
+					'</div>' +
+					'</div>' +
+					'<button type="button" class="button button-small pnmf-dupe-refs-btn" data-id="' + it.id + '">' + __( 'References', 'plugnest-media-folders' ) + '</button>' +
+					'<a class="button button-small" href="' + esc( it.edit ) + '" target="_blank" rel="noopener">' + __( 'Edit', 'plugnest-media-folders' ) + '</a>' +
+					'</div>'
+				);
+			} ).join( '' );
+
+			return (
+				'<div class="pnmf-dupe-group">' +
+				'<div class="pnmf-dupe-group-head">' +
+				sprintf( __( '%d identical copies', 'plugnest-media-folders' ), g.count ) +
+				' — ' + sprintf( __( '%s total', 'plugnest-media-folders' ), fmtBytes( total ) ) +
+				'</div>' +
+				rows +
+				'</div>'
+			);
+		} ).join( '' );
+
+		if ( data.truncated ) {
+			list.innerHTML += '<div class="pnmf-hint">' + __( 'More duplicate groups exist beyond the display limit.', 'plugnest-media-folders' ) + '</div>';
+		}
+
+		renderDupeBanner( groups );
+
+		list.innerHTML =
+			'<div class="pnmf-hint pnmf-dupe-summary">' +
+			sprintf( __( '%1$d duplicate groups — %2$d redundant copies.', 'plugnest-media-folders' ), data.group_count, data.dupe_count ) +
+			'</div>' +
+			list.innerHTML;
+
+		updateDupeCount();
+	}
+
+	/** 建立雜湊索引（分批）＋回報重複群組，渲染進 modal。 */
+	/* ---------- 雜湊計算：有時間預算、可中止、顯示目前檔案 ---------- */
+	const hashJob = { running: false, cancel: false };
+
+	function hashDuration( sec ) {
+		sec = Math.max( 0, Math.round( sec ) );
+		if ( sec < 60 ) { return sprintf( __( '%d s', 'plugnest-media-folders' ), sec ); }
+		const m = Math.floor( sec / 60 );
+		const s = sec % 60;
+		return s
+			? sprintf( __( '%1$d min %2$d s', 'plugnest-media-folders' ), m, s )
+			: sprintf( __( '%d min', 'plugnest-media-folders' ), m );
+	}
+
+	function renderHashProgress( processed, total, current, started ) {
+		total = Math.max( 1, total );
+		const pct = Math.min( 100, Math.round( ( processed / total ) * 100 ) );
+
+		const fill = document.getElementById( 'pnmf-job-fill' );
+		const count = document.getElementById( 'pnmf-job-count' );
+		const eta = document.getElementById( 'pnmf-job-eta' );
+		const file = document.getElementById( 'pnmf-job-file' );
+
+		if ( fill ) { fill.style.width = pct + '%'; }
+		if ( count ) { count.textContent = sprintf( __( '%1$d / %2$d hashed', 'plugnest-media-folders' ), processed, total ); }
+		if ( eta ) {
+			const sec = processed > 0 ? ( ( Date.now() - started ) / 1000 / processed ) * Math.max( 0, total - processed ) : 0;
+			eta.textContent = sec > 0 ? sprintf( __( 'About %s left', 'plugnest-media-folders' ), hashDuration( sec ) ) : '';
+		}
+		if ( file ) { file.textContent = current ? sprintf( __( 'Processing: %s', 'plugnest-media-folders' ), current ) : ''; }
+	}
+
+	function hashTimeout( promise, ms ) {
+		return Promise.race( [
+			promise,
+			new Promise( ( _, reject ) => setTimeout( () => reject( new Error( __( 'The server did not answer in time. The work may still be running — try again, or lower the batch size.', 'plugnest-media-folders' ) ) ), ms ) ),
+		] );
+	}
+
+	async function runDupeScan( rebuild ) {
+		/* 已在跑就不要再開一條，否則兩個迴圈會互相把計數疊上去。 */
+		if ( hashJob.running ) { return; }
+
+		const list = $( '#pnmf-dupe-list' );
+		list.innerHTML = '<span class="pnmf-hint">' + __( 'Hashing files…', 'plugnest-media-folders' ) + '</span>';
+
+		const panel = document.getElementById( 'pnmf-dupe-job' );
+		const stop  = $( '#pnmf-hash-cancel' );
+		const started = Date.now();
+
+		hashJob.running = true;
+		hashJob.cancel = false;
+		if ( panel ) { panel.hidden = false; }
+		if ( stop ) { stop.hidden = false; stop.disabled = false; stop.textContent = __( 'Stop', 'plugnest-media-folders' ); }
+
+		let missing = -1;
+		let processed = 0;
+		let done = false;
+		let cancelled = false;
+		let guard = 0;
+		let serverTotal = 0;
+		let skipIds = [];
+		let failedIds = [];
+		let stuckIds = [];
+		let batchBase = 0;
+
+		/* 逐檔輪詢：讓「已計數」與「正在處理」都來自伺服器的同一份狀態。 */
+		const pollHashState = async () => {
+			try {
+				const st = await api( 'dupe_hash_state', {} );
+				if ( ! st || ! st.running ) { return; }
+				renderHashProgress( batchBase + ( st.done || 0 ), serverTotal || st.total || 0, st.current || '', started );
+			} catch ( e ) { /* 忽略 */ }
+		};
+		const hashStateTimer = setInterval( pollHashState, 800 );
+
+		const rebuildBtn = $( '#pnmf-dupe-rebuild' );
+		if ( rebuildBtn ) { rebuildBtn.disabled = true; }
+
+		try {
+			while ( ! done && guard < 5000 ) {
+				if ( hashJob.cancel ) { cancelled = true; break; }
+				guard++;
+
+				const d = await hashTimeout( api( 'dupe_build', {
+					limit: 80,
+					rebuild: ( guard === 1 && rebuild ) ? 1 : 0,
+					reset: guard === 1 ? 1 : 0,
+					skip: skipIds,
+				} ), 45000 );
+
+				if ( d.cancelled ) { cancelled = true; break; }
+
+				const did = d.processed || 0;
+				processed += did;
+				missing = d.missing || 0;
+				serverTotal = d.total || serverTotal || ( processed + missing );
+				done = !! d.done;
+
+				batchBase = processed;
+				renderHashProgress( processed, serverTotal, d.current || '', started );
+
+				/*
+				 * 有檔案寫不進雜湊時，把它們記下來並在後續批次跳過，
+				 * 否則「ID 最小的優先」會讓整批卡在同樣幾個檔案上、其他檔案永遠排不到。
+				 */
+				if ( d.stuck_ids && d.stuck_ids.length ) {
+					stuckIds = stuckIds.concat( d.stuck_ids );
+					skipIds = skipIds.concat( d.stuck_ids );
+				}
+
+				if ( d.failed > 0 ) {
+					const ids = d.failed_ids || [];
+					failedIds = failedIds.concat( ids );
+					skipIds = skipIds.concat( ids );
+
+					/* 一次幾十個都失敗，多半是資料庫／快取問題：直接停下並說明。 */
+					if ( d.failed > 50 ) {
+						throw new Error( sprintf(
+							__( 'Hashing stopped: %1$d files could not be saved to the database (IDs: %2$s). Check database write permissions, or disable the object cache and try again.', 'plugnest-media-folders' ),
+							d.failed,
+							ids.join( ', ' )
+						) );
+					}
+				}
+
+				/* 伺服器這批什麼都沒做、也沒完成：不要無限迴圈。 */
+				if ( ! did && ! done ) {
+					throw new Error( __( 'Hashing stopped unexpectedly — try running it again.', 'plugnest-media-folders' ) );
+				}
+			}
+		} catch ( e ) {
+			/* 超時／出錯時也通知伺服器停手，避免背景繼續跑。 */
+			try { await api( 'dupe_build_cancel', {} ); } catch ( e2 ) { /* 忽略 */ }
+			toast( e.message, 'error' );
+			if ( stop ) { stop.hidden = true; }
+			if ( panel ) { setTimeout( () => { if ( ! hashJob.running ) { panel.hidden = true; } }, 1500 ); }
+			throw e;
+		} finally {
+			clearInterval( hashStateTimer );
+			hashJob.running = false;
+			if ( rebuildBtn ) { rebuildBtn.disabled = false; }
+			if ( stop ) { stop.hidden = true; stop.disabled = false; stop.textContent = __( 'Stop', 'plugnest-media-folders' ); }
+			/* 延後隱藏；若使用者馬上又按了重建，不要把新任務的面板關掉。 */
+			if ( panel ) { setTimeout( () => { if ( ! hashJob.running ) { panel.hidden = true; } }, 1200 ); }
+		}
+
+		const badIds = Array.from( new Set( failedIds.concat( stuckIds ) ) );
+		if ( badIds.length ) {
+			toast( sprintf(
+				__( '%1$d files could not be hashed (IDs: %2$s). The rest were hashed; these were skipped so the run could finish.', 'plugnest-media-folders' ),
+				badIds.length,
+				badIds.slice( 0, 10 ).join( ', ' )
+			), 'error' );
+		}
+
+		if ( cancelled || ! done ) {
+			toast( sprintf( __( 'Hashing stopped — %d files are still unhashed. Run it again to continue.', 'plugnest-media-folders' ), Math.max( 0, missing ) ), 'ok' );
+			list.innerHTML = '<span class="pnmf-hint">' + __( 'Hashing stopped.', 'plugnest-media-folders' ) + '</span>';
+			return;
+		}
+
+		if ( ! done ) {
+			throw new Error( __( 'Too many batches; stopped. Run again to continue.', 'plugnest-media-folders' ) );
+		}
+
+		try {
+			const data = await api( 'dupe_list', {} );
+			const groups = data.groups || [];
+
+			/* Pro 控制區只在授權有效時露出（清理邏輯全在 Pro 外掛）。 */
+			const proCtrl = $( '#pnmf-dupe-pro-ctrl' );
+			const freeHint = $( '#pnmf-dupe-free-hint' );
+			if ( proCtrl ) { proCtrl.hidden = ! CFG.pro; }
+			if ( freeHint ) { freeHint.hidden = !! CFG.pro; }
+
+			if ( ! groups.length ) {
+				list.innerHTML = '<div class="pnmf-empty">' + __( 'Great! No duplicate files were found.', 'plugnest-media-folders' ) + '</div>';
+				return;
+			}
+
+			renderDupeList( data );
+			lastDupeData = data;
+		} catch ( e ) {
+			list.innerHTML = '<div class="pnmf-empty">' + esc( e.message ) + '</div>';
+		}
+	}
+
+	/* 中止雜湊計算：按鈕 + 關閉彈窗 + 離開頁面三種路徑都要能停。 */
+	const hashStopBtn = document.getElementById( 'pnmf-hash-cancel' );
+	if ( hashStopBtn ) {
+		hashStopBtn.addEventListener( 'click', async () => {
+			if ( ! hashJob.running ) { return; }
+			hashJob.cancel = true;
+			hashStopBtn.disabled = true;
+			hashStopBtn.textContent = __( 'Stopping…', 'plugnest-media-folders' );
+			try { await api( 'dupe_build_cancel', {} ); } catch ( e ) { /* 忽略 */ }
+		} );
+	}
+
+	window.addEventListener( 'beforeunload', () => {
+		if ( ! hashJob.running ) { return; }
+		try {
+			const fd = new FormData();
+			fd.append( 'action', 'pnmf_dupe_build_cancel' );
+			fd.append( 'nonce', CFG.nonce );
+			navigator.sendBeacon( CFG.ajaxUrl, fd );
+		} catch ( e ) { /* 忽略 */ }
+	} );
+
+	document.addEventListener( 'click', ( e ) => {
+		if ( ! hashJob.running ) { return; }
+		const t = e.target;
+		if ( ! t || ! t.closest ) { return; }
+		if ( t.closest( '#pnmf-modal-dupe [data-close]' ) || t.closest( '#pnmf-modal-dupe .pnmf-modal-close' ) ) {
+			e.preventDefault();
+			e.stopPropagation();
+			if ( window.confirm( __( 'Hashing is still running. Stop it and close?', 'plugnest-media-folders' ) ) ) {
+				hashJob.cancel = true;
+				api( 'dupe_build_cancel', {} ).catch( () => {} );
+			}
+		}
+	}, true );
+
+	function openDupes() {
+		openModal( '#pnmf-modal-dupe' );
+		const proCtrl = $( '#pnmf-dupe-pro-ctrl' );
+		const freeHint = $( '#pnmf-dupe-free-hint' );
+		if ( proCtrl ) { proCtrl.hidden = true; }
+		if ( freeHint ) { freeHint.hidden = false; }
+		runDupeScan( false ).catch( () => {} );
+	}
+
+	/* Pro 勾選：計數即時更新；切換「保留最大／最新」時重畫，改掉預設勾選。 */
+	document.addEventListener( 'change', ( e ) => {
+		const t = e.target;
+		if ( ! t ) { return; }
+		if ( t.id === 'pnmf-dupe-checkall' ) {
+			document.querySelectorAll( '.pnmf-dupe-del' ).forEach( ( c ) => { c.checked = t.checked; } );
+			updateDupeCount();
+			return;
+		}
+		if ( t.id === 'pnmf-dupe-include-used' ) {
+			renderDupeBanner( lastDupeData ? lastDupeData.groups : [] );
+			return;
+		}
+		if ( t.classList && t.classList.contains( 'pnmf-dupe-del' ) ) {
+			updateDupeCount();
+			return;
+		}
+		if ( t.name === 'pnmf-dupe-keep' && lastDupeData ) {
+			renderDupeList( lastDupeData );
+		}
+	} );
+
+	/* 展開引用明細。 */
+	document.addEventListener( 'click', ( e ) => {
+		if ( e.target && e.target.classList && e.target.classList.contains( 'pnmf-dupe-refs-btn' ) ) {
+			toggleDupeRefs( e.target );
+		}
+	} );
+
+	/* 一鍵放行「使用中／未掃描」的副本。 */
+	document.addEventListener( 'click', ( e ) => {
+		if ( e.target && e.target.id === 'pnmf-dupe-allow-used' ) {
+			const allow = document.getElementById( 'pnmf-dupe-include-used' );
+			if ( allow ) {
+				allow.checked = true;
+				renderDupeBanner( lastDupeData ? lastDupeData.groups : [] );
+			}
+		}
+	} );
+
+	/* 「先掃描使用狀態」：關掉彈窗、觸發工具列的 Scan usage。 */
+	document.addEventListener( 'click', ( e ) => {
+		if ( e.target && e.target.id === 'pnmf-dupe-scan-first' ) {
+			closeModal( '#pnmf-modal-dupe' );
+			const btn = document.getElementById( 'pnmf-btn-scan' );
+			if ( btn ) { btn.click(); }
+		}
+	} );
+
+	/* Pro 清理完成後由 pro-admin.js 發事件，這裡重掃一次。 */
+	document.addEventListener( 'pnmf:dupes-changed', () => {
+		const modal = document.getElementById( 'pnmf-modal-dupe' );
+		if ( modal && ! modal.hidden ) {
+			runDupeScan( false ).catch( () => {} );
+		}
+	} );
 
 	/* =========================================================
 	 *  操作記錄
@@ -2108,6 +2901,7 @@
 			} else {
 				state.folderId = key === 'all' ? 0 : key === 'none' ? 'none' : parseInt( key, 10 );
 			}
+			applyFolderSort();
 			state.paged = 1;
 			renderTree();
 			loadMedia();
@@ -2119,11 +2913,16 @@
 		 * 從作業系統拖「檔案」進來（上傳）是另一種手勢：types 含 Files，
 		 * 資料夾列只做 override 標記，實際上傳交給 plupload 的整頁 dropzone。 */
 		function isFileDrag( e ) {
-			/* 內部拖動優先：只要是我們 dragstart 發起的（dragIds 已設），
-			 * 一律不算檔案拖動——拖縮圖（<img>）時瀏覽器會把圖片以
-			 * 虛擬檔案塞進 dataTransfer（types 含 Files），外觀跟外部
-			 * 拖檔案一模一樣，只能以發起者區分。 */
+			/* 內部拖動優先：只要是我們 dragstart 發起的，一律不算檔案拖動
+			 * ——拖縮圖（<img>）時瀏覽器會把圖片以虛擬檔案塞進 dataTransfer
+			 * （types 含 Files），外觀跟外部拖檔案一模一樣。判斷順序：
+			 *   1) state.dragIds 已設（同一輪拖曳的即時狀態）
+			 *   2) dataTransfer 帶我們的自訂型別（不依賴 transient 狀態）
+			 * 兩者都沒有，才依 types 是否含 Files 判定為外部檔案。 */
 			if ( state.dragIds && state.dragIds.length ) {
+				return false;
+			}
+			if ( internalIds( e ) ) {
 				return false;
 			}
 			try {
@@ -2215,7 +3014,9 @@
 			 * 瀏覽器會附帶虛擬檔案，不擋會被撿去重新上傳）。 */
 			e.stopPropagation();
 
-			const ids = state.dragIds && state.dragIds.length ? state.dragIds : selectedIds();
+			const ids = ( state.dragIds && state.dragIds.length )
+				? state.dragIds
+				: ( internalIds( e ) || selectedIds() );
 			const selectAll = state.selectAll && ! state.dragIds ? 1 : 0;
 			state.dragIds = null;
 			if ( ! ids.length && ! selectAll ) {
@@ -2312,7 +3113,7 @@
 				e.preventDefault();
 				/* 內部拖動到此為止（同樹列：防 plupload 撿走縮圖虛擬檔案）。 */
 				e.stopPropagation();
-				moveSelectionToFolder( parseInt( tile.dataset.tile, 10 ) );
+				moveSelectionToFolder( parseInt( tile.dataset.tile, 10 ), e );
 			} );
 		}
 
@@ -2464,6 +3265,8 @@
 		} );
 
 		/* ---------- 網格：選取與詳情 ---------- */
+		let selAnchor = null; /* Shift 範圍選取的錨點（item id） */
+
 		$( '#pnmf-grid' ).addEventListener( 'click', ( e ) => {
 			/* 剛結束框選 → 忽略瀏覽器補上的這次 click */
 			if ( Date.now() < suppressClickUntil ) {
@@ -2481,14 +3284,42 @@
 			}
 			const id = parseInt( card.dataset.id, 10 );
 
-			/* 勾選框、或按住 Ctrl/Cmd/Shift → 切換選取 */
-			if ( e.target.closest( '.pnmf-card-check' ) || e.ctrlKey || e.metaKey || e.shiftKey ) {
+			/* 勾選框、或按住 Ctrl/Cmd → 切換選取，並設為範圍錨點 */
+			if ( e.target.closest( '.pnmf-card-check' ) || e.ctrlKey || e.metaKey ) {
 				toggleSelection( id, card );
+				selAnchor = id;
 				return;
 			}
 
-			/* 點卡片其他位置 → 開詳細面板（不動選取狀態） */
+			/* Shift + 已有錨點 → 範圍選取（本頁可見順序） */
+			if ( e.shiftKey && null !== selAnchor && selAnchor !== id ) {
+				const ids = state.items.map( ( it ) => it.id );
+				const a = ids.indexOf( selAnchor );
+				const b = ids.indexOf( id );
+				if ( a >= 0 && b >= 0 ) {
+					state.selectAll = false;
+					for ( let i = Math.min( a, b ); i <= Math.max( a, b ); i++ ) {
+						state.selected.add( ids[ i ] );
+					}
+					document
+						.querySelectorAll( '.pnmf-card' )
+						.forEach( ( c ) => c.classList.toggle( 'is-selected', state.selected.has( parseInt( c.dataset.id, 10 ) ) ) );
+					renderBulkbar();
+					selAnchor = id;
+					return;
+				}
+			}
+
+			/* Shift 但沒有錨點 → 當作單一切換 */
+			if ( e.shiftKey ) {
+				toggleSelection( id, card );
+				selAnchor = id;
+				return;
+			}
+
+			/* 點卡片其他位置 → 開詳細面板（不動選取狀態）＋更新錨點 */
 			openInspector( id );
+			selAnchor = id;
 		} );
 
 		/* ---------- 網格：拉框選取 ---------- */
@@ -2554,9 +3385,21 @@
 			const id = parseInt( card.dataset.id, 10 );
 			/* 拖的卡片在選取集合內 → 拖整個選取；否則只拖它自己 */
 			state.dragIds = state.selected.has( id ) ? selectedIds() : [ id ];
+			/* selectedIds() 在「跨頁全選」狀態下會回空陣列；空陣列的拖曳
+			 * 在 drop 端會被當成「不是內部拖曳」。一律至少要有這一張。 */
+			if ( ! state.dragIds.length ) {
+				state.dragIds = [ id ];
+			}
 			e.dataTransfer.effectAllowed = 'move';
 			/* Firefox 沒有 setData 不會啟動拖曳 */
 			e.dataTransfer.setData( 'text/plain', String( id ) );
+			/* 內部拖曳的可靠標記：state.dragIds 是 transient 狀態，dragstart
+			 * 沒跑到或被清掉時，drop 只會看到 <img> 附帶的虛擬檔案而誤判成
+			 * 「拖檔案進來上傳」。自訂型別寫進 dataTransfer，整個拖曳生命
+			 * 週期（dragstart → dragover → drop）都讀得到。 */
+			try {
+				e.dataTransfer.setData( 'application/x-pnmf-media', JSON.stringify( state.dragIds ) );
+			} catch ( err ) {}
 			/* 左側樹進入「可投放」狀態 */
 			const tree = document.querySelector( '#pnmf-tree' );
 			if ( tree ) {
@@ -2694,7 +3537,141 @@
 
 		/* ---------- 頂部按鈕 ---------- */
 		$( '#pnmf-btn-scan' ).addEventListener( 'click', scanUsage );
+		$( '#pnmf-btn-dupe' ).addEventListener( 'click', openDupes );
+		$( '#pnmf-dupe-rebuild' ).addEventListener( 'click', () => {
+			if ( window.confirm( __( 'Re-hash every file? This is slow on large libraries but catches files replaced outside WordPress.', 'plugnest-media-folders' ) ) ) {
+				runDupeScan( true ).catch( () => {} );
+			}
+		} );
+
+		/* ---------- 智慧篩選器 ---------- */
+		renderViews();
+		$( '#pnmf-views' ).addEventListener( 'change', ( e ) => {
+			if ( e.target.value ) {
+				applyView( e.target.value );
+			}
+		} );
+		$( '#pnmf-view-save' ).addEventListener( 'click', saveView );
+		$( '#pnmf-view-del' ).addEventListener( 'click', deleteView );
+		$( '#pnmf-sort-pin' ).addEventListener( 'click', pinFolderSort );
+		$( '#pnmf-btn-fstats' ).addEventListener( 'click', openFolderStats );
+
+		/* ---------- 鍵盤快捷鍵 ---------- */
+		document.addEventListener( 'keydown', ( e ) => {
+			const t = e.target;
+			const typing = t && ( 'INPUT' === t.tagName || 'TEXTAREA' === t.tagName || 'SELECT' === t.tagName || t.isContentEditable );
+
+			/* Esc：關最上層 modal → 清除選取；正在跑進度時不干擾 */
+			if ( 'Escape' === e.key ) {
+				const progress = $( '#pnmf-progress' );
+				if ( progress && ! progress.hidden ) {
+					return;
+				}
+				const open = Array.from( document.querySelectorAll( '.pnmf-modal' ) ).filter( ( m ) => ! m.hidden ).pop();
+				if ( open ) {
+					open.hidden = true;
+					e.preventDefault();
+					return;
+				}
+				if ( ! typing && ( state.selected.size || state.selectAll ) ) {
+					$( '#pnmf-clear-selection' ).click();
+				}
+				return;
+			}
+
+			if ( typing ) {
+				return;
+			}
+
+			/* Ctrl/Cmd+K → 資料夾快速跳轉 */
+			if ( ( e.ctrlKey || e.metaKey ) && 'k' === e.key.toLowerCase() ) {
+				const inp = $( '#pnmf-tree-search' );
+				if ( inp ) {
+					e.preventDefault();
+					inp.focus();
+					inp.select();
+				}
+				return;
+			}
+
+			/* Ctrl/Cmd+A → 全選符合（與「Select all matching」一致） */
+			if ( ( e.ctrlKey || e.metaKey ) && 'a' === e.key.toLowerCase() ) {
+				e.preventDefault();
+				$( '#pnmf-select-all' ).click();
+				return;
+			}
+
+			/* Delete → 永久刪除（沿用既有確認流程） */
+			if ( 'Delete' === e.key && ( state.selected.size || state.selectAll ) ) {
+				const delBtn = document.querySelector( '[data-bulk="media-delete"]' );
+				if ( delBtn ) {
+					delBtn.click();
+				}
+			}
+		} );
+
 		$( '#pnmf-btn-logs' ).addEventListener( 'click', openLogs );
+
+		/* ---------- 資料夾快速跳轉（Ctrl+K） ---------- */
+		const tjInput = $( '#pnmf-tree-search' );
+		const tjResults = $( '#pnmf-tree-search-results' );
+
+		if ( tjInput && tjResults ) {
+			tjInput.addEventListener( 'input', () => {
+				const q = tjInput.value.trim().toLowerCase();
+				if ( ! q ) {
+					tjResults.hidden = true;
+					tjResults.innerHTML = '';
+					return;
+				}
+				const matches = state.folders
+					.filter( ( f ) => ( f.name || '' ).toLowerCase().indexOf( q ) >= 0 )
+					.slice( 0, 8 );
+				tjResults.innerHTML = matches.length
+					? matches
+							.map(
+								( f ) =>
+									'<button type="button" class="pnmf-tj-item" data-tj="' + parseInt( f.term_id, 10 ) + '">' +
+									esc( f.name ) +
+									( f.count ? ' <span class="pnmf-tj-count">' + sprintf( __( '%d media', 'plugnest-media-folders' ), f.count ) + '</span>' : '' ) +
+									'</button>'
+							)
+							.join( '' )
+					: '<span class="pnmf-tj-empty">' + __( 'No matching folders.', 'plugnest-media-folders' ) + '</span>';
+				tjResults.hidden = false;
+			} );
+
+			tjInput.addEventListener( 'keydown', ( e ) => {
+				if ( 'Escape' === e.key ) {
+					tjInput.value = '';
+					tjResults.hidden = true;
+					tjInput.blur();
+				}
+			} );
+
+			tjResults.addEventListener( 'click', ( e ) => {
+				const btn = e.target.closest( '[data-tj]' );
+				if ( ! btn ) {
+					return;
+				}
+				state.folderId = parseInt( btn.dataset.tj, 10 ) || 0;
+				renderTree();
+				renderFoldersBar();
+				state.paged = 1;
+				state.selected.clear();
+				state.selectAll = false;
+				renderBulkbar();
+				tjInput.value = '';
+				tjResults.hidden = true;
+				loadMedia();
+			} );
+
+			document.addEventListener( 'click', ( e ) => {
+				if ( ! e.target.closest( '.pnmf-tree-search' ) ) {
+					tjResults.hidden = true;
+				}
+			} );
+		}
 		$( '#pnmf-btn-auto' ).addEventListener( 'click', () => {
 			renderRules();
 			openModal( '#pnmf-modal-auto' );
@@ -2999,7 +3976,7 @@
 	
 	/* Pro 等附加外掛的擴展點（wp.org 規範：Pro 代碼在 Pro 外掛內，
 	 * 透過此 API 與免費版協作）。 */
-	window.PNMF_UI = { state, $, esc, __, sprintf, toast, api, refresh, loadTree, renderTree, renderFoldersBar, currentScope, selectedIds, openModal, closeModal, progress, loadMedia };
+	window.PNMF_UI = { state, $, esc, __, sprintf, toast, api, refresh, loadTree, renderTree, renderFoldersBar, currentScope, selectedIds, openModal, closeModal, progress, loadMedia, dupeDeleteIds: () => Array.from( document.querySelectorAll( '.pnmf-dupe-del:checked' ) ).map( ( c ) => parseInt( c.value, 10 ) ).filter( Boolean ), dupeRerun: () => runDupeScan( false ) };
 
 /* =========================================================
 	 *  啟動
@@ -3011,5 +3988,29 @@
 		renderTags();
 		bindEvents();
 		loadMedia();
+
+		/* 一進頁面就顯示「新增功能在哪裡」導覽（可關掉，之後用工具列按鈕再看）。 */
+		if ( CFG.guide ) {
+			setTimeout( () => openModal( '#pnmf-modal-guide' ), 350 );
+		}
+
+		const guideBtn = document.getElementById( 'pnmf-btn-guide' );
+		if ( guideBtn ) {
+			guideBtn.addEventListener( 'click', () => openModal( '#pnmf-modal-guide' ) );
+		}
+
+		const guideClose = document.getElementById( 'pnmf-guide-close' );
+		if ( guideClose ) {
+			guideClose.addEventListener( 'click', async () => {
+				const mute = document.getElementById( 'pnmf-guide-mute' );
+				if ( mute && mute.checked ) {
+					try {
+						await api( 'guide_mute', {} );
+						CFG.guide = 0;
+					} catch ( e ) { /* 記不住就算了，下次再說 */ }
+				}
+				closeModal( '#pnmf-modal-guide' );
+			} );
+		}
 	} );
 } )();

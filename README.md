@@ -6,7 +6,7 @@ English | [繁體中文](README.zh-TW.md) | [简体中文](README.zh-CN.md)
 
 PlugNest Media Folders adds nested, drag-and-drop folders, tags, batch tools and a usage scanner to the WordPress media library. It only writes classification data: your files are never moved, renamed or re-URLed, and deactivating the plugin leaves your site exactly as it was.
 
-📦 **Install from WordPress.org** (once approved) · 🏠 [Product site](https://media-folders.plugnest.dev/) · 📖 [Documentation](https://media-folders.plugnest.dev/docs.html)
+📦 **[Install from WordPress.org](https://wordpress.org/plugins/plugnest-media-folders/)** · 🏠 [Product site](https://media-folders.plugnest.dev/) · 📖 [Documentation](https://media-folders.plugnest.dev/docs.html)
 
 ## Highlights
 

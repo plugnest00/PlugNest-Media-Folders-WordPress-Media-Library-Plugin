@@ -1,7 +1,5 @@
-# Rebuilt from the compiled .mo.
 msgid ""
-msgstr ""
-"Project-Id-Version: PlugNest Media Folders 2.5.0\\nMIME-Version: 1.0\\nContent-Type: text/plain; charset=UTF-8\\nContent-Transfer-Encoding: 8bit\\nPlural-Forms: nplurals=1; plural=0;\\n\n"
+msgstr "\"\"Project-Id-Version: PlugNest Media Folders 2.5.0\\nMIME-Version: 1.0\\nContent-Type: text/plain; charset=UTF-8\\nContent-Transfer-Encoding: 8bit\\nPlural-Forms: nplurals=1; plural=0;\\n\n"
 
 msgid " (it follows the folder selected on the left)."
 msgstr "（切換左側資料夾即跟著變）。"
@@ -12,14 +10,29 @@ msgstr "（略過 %d）"
 msgid "\"Unused\" means no reference was found in any post or page content at scan time. We recommend filtering and reviewing before deleting; deletion cannot be undone."
 msgstr "「未被引用」代表掃描時沒有在任何文章／頁面內容中找到引用。建議先篩選確認再刪除；刪除後無法復原。"
 
+msgid "%1$d duplicate groups — %2$d redundant copies."
+msgstr "%1$d 組重複——%2$d 個多餘副本。"
+
 msgid "%1$d media %2$s \"%3$s\"."
 msgstr "已將 %1$d 個媒體%2$s「%3$s」。"
 
 msgid "%1$d media, tags %2$s: %3$s"
 msgstr "%1$d 個媒體，標籤%2$s：%3$s"
 
+msgid "%d copies were skipped because they are in use (or not yet scanned)."
+msgstr "已跳過 %d 個使用中（或尚未掃描）的副本。"
+
+msgid "%d fields failed."
+msgstr "%d 個欄位失敗。"
+
 msgid "%d folders"
 msgstr "%d 個資料夾"
+
+msgid "%d identical copies"
+msgstr "%d 個完全相同的副本"
+
+msgid "%d links were rewritten to the kept copy."
+msgstr "已把 %d 個連結改指向保留的副本。"
 
 msgid "%d media"
 msgstr "%d 個媒體"
@@ -27,8 +40,14 @@ msgstr "%d 個媒體"
 msgid "%d media in total"
 msgstr "%d 個媒體"
 
+msgid "%s total"
+msgstr "共 %s"
+
 msgid "(%d failed)"
 msgstr "（%d 個刪除失敗）"
+
+msgid "(Requires an active Pro license.)"
+msgstr "（需要有效的 Pro 授權。）"
 
 msgid "(none — classify later)"
 msgstr "（不指定，之後再分類）"
@@ -41,6 +60,33 @@ msgstr "不能把資料夾移到它自己裡面。"
 
 msgid "A folder with the same name already exists at this level."
 msgstr "同一層已經有同名資料夾了。"
+
+msgid "AI alt text is not configured. Add your API key in AI settings first."
+msgstr "尚未設定 AI。請先在 AI 設定中填入 API 金鑰。"
+
+msgid "AI filled %d fields."
+msgstr "AI 已填補 %d 個欄位。"
+
+msgid "AI folders"
+msgstr "AI 資料夾"
+
+msgid "AI image service error: %s"
+msgstr "AI 圖片服務錯誤：%s"
+
+msgid "AI settings"
+msgstr "AI 設定"
+
+msgid "AI settings saved."
+msgstr "AI 設定已儲存。"
+
+msgid "AI tag suggestions loaded for %d media."
+msgstr "已載入 %d 個媒體的 AI 標籤建議。"
+
+msgid "AI tags"
+msgstr "AI 標籤"
+
+msgid "API key"
+msgstr "API 金鑰"
 
 msgid "Access roles for \"%s\" updated."
 msgstr "「%s」的存取角色已更新。"
@@ -60,6 +106,9 @@ msgstr "找不到這筆操作記錄。"
 msgid "Activity log"
 msgstr "操作記錄"
 
+msgid "Activity log exported."
+msgstr "活動日誌已匯出。"
+
 msgid "Add"
 msgstr "加入"
 
@@ -71,6 +120,12 @@ msgstr "新增標籤"
 
 msgid "Add tags"
 msgstr "新增標籤"
+
+msgid "Add your API key first (AI settings)."
+msgstr "請先填入 API 金鑰（AI 設定）。"
+
+msgid "Added in the last 7 days"
+msgstr "近 7 天新增"
 
 msgid "All fields restored to their original values."
 msgstr "所有欄位已還原原值。"
@@ -93,6 +148,9 @@ msgstr "全部類型"
 msgid "Also add tags (comma-separated, optional)"
 msgstr "同時加上標籤（逗號分隔，可留空）"
 
+msgid "Also delete copies in use"
+msgstr "同時刪除使用中的副本"
+
 msgid "Also permanently delete ALL media inside this folder and its subfolders (cannot be undone!)"
 msgstr "同時永久刪除此資料夾與其子資料夾內的全部媒體（無法復原！）"
 
@@ -101,6 +159,9 @@ msgstr "替代文字 Alt"
 
 msgid "Alt text…"
 msgstr "替代文字…"
+
+msgid "An auto-assign job is already running. Try again later."
+msgstr "已有自動歸檔作業在執行中，請稍後再試。"
 
 msgid "Analyzing site references…"
 msgstr "正在分析全站引用…"
@@ -114,6 +175,9 @@ msgstr "不限"
 msgid "Append after original"
 msgstr "附加在原值後面"
 
+msgid "Applied tags to %d media."
+msgstr "已為 %d 個媒體套用標籤。"
+
 msgid "Apply all (skip empty)"
 msgstr "套用全部（略過留空）"
 
@@ -123,11 +187,17 @@ msgstr "確定要套用自動分類嗎？套用後可以從「操作記錄」還
 msgid "Apply fields"
 msgstr "套用欄位"
 
+msgid "Apply folders"
+msgstr "套用歸檔"
+
 msgid "Apply mode"
 msgstr "套用方式"
 
 msgid "Apply now"
 msgstr "開始套用"
+
+msgid "Apply tags"
+msgstr "套用標籤"
 
 msgid "Assign folder"
 msgstr "指派資料夾"
@@ -144,6 +214,9 @@ msgstr "自動分類"
 msgid "Auto-assign complete: %1$d assigned, %2$d skipped. Undo it from Activity Log if needed."
 msgstr "自動分類完成：歸類 %1$d 個，略過 %2$d 個。可從「操作記錄」還原。"
 
+msgid "Auto-assign re-run finished: %1$d applied, %2$d skipped."
+msgstr "自動歸檔重跑完成：%1$d 個已套用、%2$d 個略過。"
+
 msgid "Auto-assigning…"
 msgstr "自動分類中…"
 
@@ -159,11 +232,17 @@ msgstr "依檔名自動填寫"
 msgid "Batch edit fields"
 msgstr "批次編輯欄位"
 
+msgid "Before deleting, all references (posts, Elementor, featured images) are rewritten to the kept copy — no dead images."
+msgstr "刪除前，把所有引用（文章、Elementor、特色圖）改指向保留的副本——不會有死圖。"
+
 msgid "Building file size index… %d remaining"
 msgstr "正在建立檔案尺寸索引…剩餘 %d 個"
 
 msgid "Buy PlugNest Media Folders Pro"
 msgstr "購買 PlugNest Media Folders Pro"
+
+msgid "By default, copies that are referenced by posts (or not yet scanned) are never deleted."
+msgstr "預設不會刪除被文章引用（或尚未掃描）的副本。"
 
 msgid "Cancel"
 msgstr "中止"
@@ -176,6 +255,9 @@ msgstr "無法還原"
 
 msgid "Caption"
 msgstr "說明 Caption"
+
+msgid "Clean up duplicates"
+msgstr "清理重複檔"
 
 msgid "Clean up unused"
 msgstr "清理未使用"
@@ -195,6 +277,9 @@ msgstr "關閉"
 msgid "Comma-separated; missing tags are created"
 msgstr "多個標籤用逗號分隔，不存在會自動建立"
 
+msgid "Compared to the previous report: %+d media."
+msgstr "與上次報告相比：+%d 個媒體。"
+
 msgid "Copy URL"
 msgstr "複製網址"
 
@@ -203,6 +288,18 @@ msgstr "複製失敗，請從詳細面板手動複製。"
 
 msgid "Copy failed. Select and copy manually."
 msgstr "複製失敗，請手動選取。"
+
+msgid "Could not create the ZIP file (temp directory not writable?)."
+msgstr "無法建立 ZIP 檔案（暫存目錄不可寫入？）。"
+
+msgid "Could not write the replacement file."
+msgstr "無法寫入取代檔案。"
+
+msgid "Create suggested new folders (top level)"
+msgstr "建立建議的新資料夾（頂層）"
+
+msgid "Created %d new folders."
+msgstr "建立了 %d 個新資料夾。"
 
 msgid "Currently unused:"
 msgstr "目前未被引用："
@@ -215,6 +312,9 @@ msgstr "在本站停用授權"
 
 msgid "Delete"
 msgstr "刪除"
+
+msgid "Delete duplicate media"
+msgstr "刪除重複媒體"
 
 msgid "Delete folder"
 msgstr "刪除資料夾"
@@ -234,11 +334,20 @@ msgstr "永久刪除"
 msgid "Delete permanently (skips trash, cannot be undone)"
 msgstr "永久刪除（不進回收桶，無法復原）"
 
+msgid "Delete the view \"%s\"?"
+msgstr "刪除檢視「%s」？"
+
 msgid "Delete this folder?\n\nMedia and physical files inside are kept; subfolders move up one level."
 msgstr "確定要刪除這個資料夾嗎？\n\n資料夾內的媒體與實體檔案都會完整保留，子資料夾會移到上一層。"
 
 msgid "Delete this tag? The media itself is not affected."
 msgstr "確定要刪除這個標籤嗎？媒體本身不會受影響。"
+
+msgid "Delete this view"
+msgstr "刪除此檢視"
+
+msgid "Deleted %1$d duplicate copies (kept the %2$s copy in each group)."
+msgstr "已刪除 %1$d 個重複副本（每組保留%2$s的副本）。"
 
 msgid "Description"
 msgstr "描述"
@@ -246,11 +355,17 @@ msgstr "描述"
 msgid "Detected plugins with folder data are listed below. Importing copies the folder tree into PlugNest Media Folders; your source plugin's data is never modified, and importing twice duplicates nothing."
 msgstr "下方列出偵測到含資料夾資料的外掛。匯入會把資料夾樹複製到 PlugNest Media Folders；來源外掛的資料完全不會被更動，重複匯入也不會重複建立。"
 
+msgid "Detection only — clean up from the media manager."
+msgstr "僅偵測——請在媒體管理頁清理。"
+
 msgid "Dimensions: "
 msgstr "尺寸："
 
 msgid "Dismiss"
 msgstr "不再顯示"
+
+msgid "Docs"
+msgstr "文件"
 
 msgid "Document"
 msgstr "文件"
@@ -261,6 +376,9 @@ msgstr "使用文檔"
 msgid "Documents"
 msgstr "文件"
 
+msgid "Download ZIP"
+msgstr "下載 ZIP"
+
 msgid "Drag cards onto a folder on the left to move them (multi-select works); drop on \"Unassigned\" to remove folders."
 msgstr "選取後把卡片直接拖到左側資料夾即可移動（可多選、可跨資料夾）；拖到「未分類」則移出資料夾。"
 
@@ -269,6 +387,15 @@ msgstr "試跑預覽"
 
 msgid "Dry run (nothing has been saved yet)"
 msgstr "試跑結果（尚未寫入任何資料）"
+
+msgid "Duplicate files"
+msgstr "重複檔案"
+
+msgid "Duplicate groups"
+msgstr "重複檔群組"
+
+msgid "Edit"
+msgstr "編輯"
 
 msgid "Edit folder"
 msgstr "編輯資料夾"
@@ -285,8 +412,17 @@ msgstr "留空的欄位不會被更動。"
 msgid "Enable"
 msgstr " 啟用"
 
+msgid "Enable scheduled re-run"
+msgstr "啟用排程重跑"
+
+msgid "Enable weekly report"
+msgstr "啟用每週報告"
+
 msgid "Enter a folder name."
 msgstr "請輸入資料夾名稱。"
+
+msgid "Enter a name for this view."
+msgstr "請輸入此檢視的名稱。"
 
 msgid "Enter tag names."
 msgstr "請輸入標籤名稱。"
@@ -303,6 +439,9 @@ msgstr "已過期——Pro 功能已鎖定，續約即恢復"
 msgid "Export"
 msgstr "匯出結構"
 
+msgid "Export CSV"
+msgstr "匯出 CSV"
+
 msgid "Export failed: %s"
 msgstr "匯出失敗：%s"
 
@@ -311,6 +450,9 @@ msgstr "副檔名（逗號分隔）"
 
 msgid "File paths untouched"
 msgstr "不影響檔案路徑"
+
+msgid "File replaced: %s (URL unchanged)."
+msgstr "已取代檔案：%s（URL 不變）。"
 
 msgid "File size high→low"
 msgstr "檔案大→小"
@@ -321,11 +463,17 @@ msgstr "檔案小→大"
 msgid "File size: "
 msgstr "檔案大小："
 
+msgid "Filed %d media."
+msgstr "已歸檔 %d 個媒體。"
+
 msgid "Filename contains (comma-separated, any)"
 msgstr "檔名包含（逗號分隔，任一命中）"
 
 msgid "Filename regex (advanced, optional)"
 msgstr "檔名正則（進階，可留空）"
+
+msgid "Files with identical content are grouped together. This report never deletes anything — review each group and decide yourself."
+msgstr "內容完全相同的檔案會歸成一組。本報告不會刪除任何東西——請逐組確認後自行決定。"
 
 msgid "Fill every empty field with a humanized version of its filename (you can edit before applying)."
 msgstr "以檔名轉成的可讀文字填入每個空欄（套用前可再編輯）。"
@@ -333,8 +481,14 @@ msgstr "以檔名轉成的可讀文字填入每個空欄（套用前可再編輯
 msgid "Fill in at least one field."
 msgstr "請至少填寫一個欄位。"
 
+msgid "Fill with AI"
+msgstr "用 AI 填補"
+
 msgid "Filled %d empty fields from filenames."
 msgstr "已依檔名填入 %d 個空欄。"
+
+msgid "Filling alt text with AI…"
+msgstr "正在用 AI 填補 Alt 文字…"
 
 msgid "Filter by folder"
 msgstr "依資料夾篩選"
@@ -347,6 +501,12 @@ msgstr "依使用狀態篩選"
 
 msgid "Filter unused media (recommended — review first)"
 msgstr "篩選出未使用媒體（推薦，先人工確認）"
+
+msgid "Find duplicates"
+msgstr "找出重複檔案"
+
+msgid "Find folder…"
+msgstr "搜尋資料夾…"
 
 msgid "Folder"
 msgstr "所屬資料夾"
@@ -365,6 +525,12 @@ msgstr "資料夾顏色已更新。"
 
 msgid "Folder created."
 msgstr "資料夾已建立。"
+
+msgid "Folder default sort removed."
+msgstr "資料夾預設排序已移除。"
+
+msgid "Folder default sort saved."
+msgstr "資料夾預設排序已儲存。"
 
 msgid "Folder deleted (the media itself is not affected)."
 msgstr "資料夾已刪除（媒體本身完全不受影響）。"
@@ -387,8 +553,14 @@ msgstr "資料夾已釘選。"
 msgid "Folder renamed."
 msgstr "資料夾已重新命名。"
 
+msgid "Folder stats"
+msgstr "資料夾統計"
+
 msgid "Folder structure exported."
 msgstr "已匯出資料夾結構。"
+
+msgid "Folder suggestion loaded for %d media."
+msgstr "已載入 %d 個媒體的資料夾建議。"
 
 msgid "Folder unpinned."
 msgstr "資料夾已取消釘選。"
@@ -402,11 +574,20 @@ msgstr "資料夾"
 msgid "From plugins"
 msgstr "從外掛匯入"
 
+msgid "Great! No duplicate files were found."
+msgstr "很好！沒有發現重複檔案。"
+
 msgid "Great! No images are missing alt text."
 msgstr "太好了！沒有缺替代文字的圖片。"
 
 msgid "Grid view"
 msgstr "縮略圖檢視"
+
+msgid "Hashing files…"
+msgstr "正在計算檔案雜湊…"
+
+msgid "Hashing files… %1$d remaining"
+msgstr "正在計算檔案雜湊…剩餘 %1$d"
 
 msgid "Hold and drag on empty space, or press a card briefly and drag, to box-select multiple items. Hold Ctrl/Cmd while dragging to add to the selection."
 msgstr "在空白處按住拖曳、或長按卡片後拖曳，即可框選多個；按住 Ctrl 拖曳則為累加選取。"
@@ -416,6 +597,15 @@ msgstr "ID 大→小"
 
 msgid "Image"
 msgstr "圖片"
+
+msgid "Image too large to send."
+msgstr "圖片過大，無法傳送。"
+
+msgid "Images"
+msgstr "圖片"
+
+msgid "Images missing alt text"
+msgstr "缺少 Alt 文字的圖片"
 
 msgid "Images only"
 msgstr "僅圖片"
@@ -459,11 +649,29 @@ msgstr "規則格式不正確。"
 msgid "Invalid server response. Please reload the page."
 msgstr "伺服器回應格式錯誤，請重新整理頁面。"
 
+msgid "Invalid sort option."
+msgstr "排序選項無效。"
+
+msgid "Jump to folder (Ctrl+K)"
+msgstr "跳至資料夾（Ctrl+K）"
+
 msgid "Keep media — remove this folder only (media becomes unassigned)"
 msgstr "保留媒體——只刪除資料夾本身（媒體變為未分類）"
 
+msgid "Language for alt text (optional)"
+msgstr "Alt 文字語言（可選）"
+
+msgid "Last run: %s"
+msgstr "上次執行：%s"
+
+msgid "Last sent: %s"
+msgstr "上次寄送：%s"
+
 msgid "Last validation"
 msgstr "最後驗證時間"
+
+msgid "Leave empty to use the site administrator email."
+msgstr "留空則使用網站管理員信箱。"
 
 msgid "License activated. Pro features are unlocked."
 msgstr "授權已啟用，Pro 功能已解鎖。"
@@ -488,6 +696,9 @@ msgstr "載入失敗：%s"
 
 msgid "Loading…"
 msgstr "載入中…"
+
+msgid "Media"
+msgstr "媒體"
 
 msgid "Media can now be organized with folders and tags — file paths and URLs are never touched."
 msgstr "媒體現在可以用「資料夾」與「標籤」分類，完全不會影響檔案路徑與網址。"
@@ -528,11 +739,23 @@ msgstr "參數不完整。"
 msgid "Missing-alt batch workflow"
 msgstr "待補 Alt 批次工作流"
 
+msgid "Model"
+msgstr "模型"
+
+msgid "More duplicate groups exist beyond the display limit."
+msgstr "還有更多重複群組超出顯示上限。"
+
 msgid "More unused media remain beyond the per-run limit. Run it again to continue."
 msgstr "還有更多未使用媒體超出本次處理上限，請再執行一次以繼續。"
 
 msgid "Move to"
 msgstr "移動到"
+
+msgid "Name this view (the current filters will be saved):"
+msgstr "為此檢視命名（將儲存目前的篩選條件）："
+
+msgid "Never run yet"
+msgstr "尚未執行"
 
 msgid "New folder name"
 msgstr "新資料夾名稱"
@@ -564,14 +787,35 @@ msgstr "沒有填寫任何替代文字。"
 msgid "No auto-assign job is running."
 msgstr "沒有進行中的自動分類工作。"
 
+msgid "No auto-assign rules saved — set rules in the media manager first."
+msgstr "尚未儲存自動歸檔規則——請先在媒體管理頁設定規則。"
+
 msgid "No color"
 msgstr "無顏色"
+
+msgid "No downloadable files in the selection (missing or offloaded files are skipped)."
+msgstr "選取中沒有可下載的檔案（遺失或 offload 的檔案會略過）。"
+
+msgid "No duplicate files were found. Run \"Find duplicates\" first."
+msgstr "沒有發現重複檔案。請先執行「找出重複檔案」。"
+
+msgid "No folder suggestions."
+msgstr "沒有資料夾建議。"
+
+msgid "No folders exist yet — create at least one folder first."
+msgstr "還沒有任何資料夾——請先建立至少一個資料夾。"
 
 msgid "No folders found in the source plugin."
 msgstr "來源外掛中沒有找到任何資料夾。"
 
 msgid "No job is running."
 msgstr "沒有進行中的工作。"
+
+msgid "No matching folders."
+msgstr "沒有符合的資料夾。"
+
+msgid "No media assigned yet."
+msgstr "尚無媒體指派。"
 
 msgid "No media in scope."
 msgstr "沒有符合範圍的媒體。"
@@ -591,6 +835,9 @@ msgstr "沒有選取任何媒體。"
 msgid "No other folder plugins with folder data were detected."
 msgstr "沒有偵測到其他含資料夾資料的外掛。"
 
+msgid "No replacement file was uploaded."
+msgstr "未上傳取代檔案。"
+
 msgid "No rule matched"
 msgstr "沒有規則命中"
 
@@ -603,8 +850,17 @@ msgstr "還沒有標籤。"
 msgid "Not active"
 msgstr "未啟用"
 
+msgid "Not an image."
+msgstr "不是圖片。"
+
 msgid "Not scanned"
 msgstr "尚未掃描"
+
+msgid "Not sent yet"
+msgstr "尚未寄送"
+
+msgid "Nothing to delete — every duplicate copy is protected (in use or restricted)."
+msgstr "沒有可刪除的項目——所有重複副本都受保護（使用中或受限）。"
 
 msgid "Nothing to fill — every field already has text."
 msgstr "沒有可填的欄位——每欄都已有文字。"
@@ -615,20 +871,35 @@ msgstr "最舊上傳"
 msgid "Once set, only users with the selected roles can see this folder (and its subfolders) and its media. Leave all unchecked to make it visible to everyone. Administrators are never restricted."
 msgstr "設定後，只有具備勾選角色的使用者能看到這個資料夾（含子資料夾）與其中媒體。全部不勾＝所有人可見。管理員不受限制。"
 
+msgid "One-click cleanup (keep the largest or newest copy) is a"
+msgstr "一鍵清理（保留最大或最新的副本）是"
+
+msgid "Only administrators can change AI settings."
+msgstr "只有管理員可以變更 AI 設定。"
+
 msgid "Only administrators can change folder permissions."
 msgstr "只有管理員能變更資料夾權限。"
 
 msgid "Only process unassigned media (recommended)"
 msgstr " 只處理尚未分類的媒體（建議保持勾選）"
 
+msgid "Only the first 60 selected media will be processed."
+msgstr "只會處理前 60 個選取的媒體。"
+
 msgid "Open PlugNest Media Folders"
 msgstr "前往PlugNest Media Folders"
+
+msgid "Open a folder first to pin its default sort."
+msgstr "請先開啟一個資料夾再釘選預設排序。"
 
 msgid "Open in native editor"
 msgstr "在原生編輯頁開啟"
 
 msgid "Open license settings"
 msgstr "開啟授權設定"
+
+msgid "Open the media manager"
+msgstr "開啟媒體管理頁"
 
 msgid "Operation failed."
 msgstr "操作失敗。"
@@ -650,6 +921,9 @@ msgstr "貼上先前匯出的 JSON。同名同層的資料夾會跳過，不會�
 
 msgid "Paste the exported JSON first."
 msgstr "請先貼上匯出的 JSON。"
+
+msgid "Per-folder breakdown of media assigned directly to each folder. Sizes come from the file-size index — run \"File size\" indexing once for accurate numbers."
+msgstr "各資料夾的媒體統計（直接指派）。大小取自檔案尺寸索引——請先執行一次尺寸索引以取得準確數字。"
 
 msgid "Permanently delete %d media?\nThe files and all thumbnails will be removed. This cannot be undone!"
 msgstr "確定要「永久刪除」%d 個媒體嗎？\n檔案與所有縮圖會一併移除，無法復原！"
@@ -675,6 +949,9 @@ msgstr "圖片"
 msgid "Pin folder"
 msgstr "釘選資料夾"
 
+msgid "Pin this sort as the current folder's default (click again to remove)"
+msgstr "把目前排序釘選為此資料夾的預設值（再點一次移除）"
+
 msgid "Pinned"
 msgstr "釘選"
 
@@ -687,11 +964,17 @@ msgstr "PlugNest Media Folders Pro"
 msgid "PlugNest Media Folders Pro — License"
 msgstr "PlugNest Media Folders Pro — 授權"
 
+msgid "PlugNest Media Folders Pro — weekly media report"
+msgstr "PlugNest Media Folders Pro——每週媒體報告"
+
 msgid "PlugNest Media Folders is now active."
 msgstr "PlugNest Media Folders 已啟用。"
 
 msgid "Post not found."
 msgstr "找不到文章。"
+
+msgid "Preparing ZIP…"
+msgstr "正在打包…"
 
 msgid "Prepend before original"
 msgstr "加在原值前面"
@@ -702,14 +985,41 @@ msgstr "上一頁"
 msgid "Pro feature"
 msgstr "Pro 功能"
 
+msgid "Pro features: unused-media cleanup wizard, missing-alt batch workflow with AI alt text, one-click duplicate cleanup, folder import/export, folder access roles, weekly maintenance report."
+msgstr "Pro 功能：未使用清理精靈、缺少 Alt 批次工作流（含 AI Alt 文字）、一鍵重複檔清理、資料夾匯入匯出、資料夾存取角色、每週維護報告。"
+
 msgid "Pro features: unused-media cleanup wizard, missing-alt batch workflow, folder import/export, folder access roles."
 msgstr "Pro 功能：未使用媒體清理精靈、待補 Alt 批次工作流、資料夾匯入/匯出與資料夾存取角色。"
 
 msgid "Processing…"
 msgstr "處理中…"
 
+msgid "Provider"
+msgstr "供應商"
+
+msgid "Re-hash every file (slow). Use this if you replaced files outside WordPress."
+msgstr "重新計算所有檔案的雜湊（較慢）。若曾在 WordPress 之外替換過檔案，請使用此功能。"
+
+msgid "Re-hash every file? This is slow on large libraries but catches files replaced outside WordPress."
+msgstr "要重新計算所有檔案的雜湊嗎？大型媒體庫會比較慢，但能找出在 WordPress 之外被替換過的檔案。"
+
+msgid "Re-run scope"
+msgstr "重跑範圍"
+
+msgid "Re-run the saved auto-assign rules automatically (weekly) over the chosen scope. Every run is logged and can be undone from the Activity Log."
+msgstr "每週自動重跑已儲存的自動歸檔規則（範圍如下）。每次執行都會記錄，可從活動日誌撤銷。"
+
+msgid "Re-scan hashes"
+msgstr "重新計算雜湊"
+
+msgid "Recipient email"
+msgstr "收件人信箱"
+
 msgid "Reference index rebuilt. The next scan will re-analyze site content."
 msgstr "引用索引已重建，下次掃描會重新分析全站內容。"
+
+msgid "References in posts will be rewritten to the kept copy — no dead images."
+msgstr "文章內的引用會改指向保留的副本——不會有死圖。"
 
 msgid "Remove from folders"
 msgstr "移出資料夾"
@@ -726,8 +1036,23 @@ msgstr "重新命名"
 msgid "Renew"
 msgstr "續約"
 
+msgid "Replace file"
+msgstr "取代檔案"
+
+msgid "Replace media file"
+msgstr "取代媒體檔案"
+
 msgid "Replace original value"
 msgstr "覆蓋原值"
+
+msgid "Replace the file of \"%s\"?\nThe file name and URL stay the same; thumbnails are regenerated. The old file content cannot be recovered!\n\nContinue?"
+msgstr "取代「%s」的檔案？\n檔名與網址不變；縮圖會重新產生。舊檔內容無法復原！\n\n要繼續嗎？"
+
+msgid "Replacing file…"
+msgstr "正在取代檔案…"
+
+msgid "Report settings saved."
+msgstr "報告設定已儲存。"
 
 msgid "Rescanning site references…"
 msgstr "正在重新掃描全站引用…"
@@ -750,6 +1075,9 @@ msgstr "已還原為預設規則。"
 msgid "Restored the previous state of %d media."
 msgstr "已還原 %d 個媒體的先前狀態。"
 
+msgid "Rewrite links to the kept copy (recommended)"
+msgstr "把連結改指向保留的副本（建議）"
+
 msgid "Rule"
 msgstr "規則"
 
@@ -768,20 +1096,50 @@ msgstr "執行"
 msgid "Run \"Dry run\" to preview the result before applying."
 msgstr "建議先按「試跑預覽」確認結果，再按「開始套用」。"
 
+msgid "Run a usage scan from the media manager to fill this in."
+msgstr "請在媒體管理頁執行使用掃描以填入此數據。"
+
+msgid "Run every week"
+msgstr "每週執行"
+
+msgid "Run now"
+msgstr "立即執行"
+
 msgid "Save"
 msgstr "儲存"
+
+msgid "Save AI settings"
+msgstr "儲存 AI 設定"
 
 msgid "Save changes"
 msgstr "儲存變更"
 
+msgid "Save current filters as a view"
+msgstr "把目前篩選條件存成檢視"
+
 msgid "Save failed"
 msgstr "儲存失敗"
+
+msgid "Save report settings"
+msgstr "儲存報告設定"
 
 msgid "Save rules"
 msgstr "儲存規則"
 
+msgid "Save schedule settings"
+msgstr "儲存排程設定"
+
 msgid "Saved %d rules."
 msgstr "已儲存 %d 條規則。"
+
+msgid "Saved view \"%s\"."
+msgstr "已儲存檢視「%s」。"
+
+msgid "Saved views"
+msgstr "已儲存的檢視"
+
+msgid "Saved views…"
+msgstr "已儲存的檢視…"
 
 msgid "Saved."
 msgstr "已儲存。"
@@ -794,6 +1152,12 @@ msgstr "掃描使用狀態"
 
 msgid "Scanning usage… %1$d / %2$d"
 msgstr "掃描使用狀態… %1$d / %2$d"
+
+msgid "Schedule settings saved."
+msgstr "排程設定已儲存。"
+
+msgid "Scheduled auto-assign re-run"
+msgstr "排程自動歸檔重跑"
 
 msgid "Scope:"
 msgstr "套用範圍："
@@ -816,8 +1180,14 @@ msgstr "請先選擇目標資料夾。"
 msgid "Select a valid target folder."
 msgstr "請選擇有效的目標資料夾。"
 
+msgid "Select a view to delete first."
+msgstr "請先選擇要刪除的檢視。"
+
 msgid "Select all matching"
 msgstr "選取全部符合條件"
+
+msgid "Select exactly one media item to replace its file."
+msgstr "請只選取一個媒體再取代檔案。"
 
 msgid "Select files to upload"
 msgstr "選擇檔案上傳"
@@ -831,6 +1201,27 @@ msgstr "已選"
 msgid "Selected all %d matching media (across pages)."
 msgstr "已選取全部符合條件的 %d 個媒體（跨頁生效）。"
 
+msgid "Send a weekly email summary: unused media, missing alt text, library growth and duplicate groups."
+msgstr "每週寄送摘要郵件：未使用媒體、缺少 Alt、媒體庫成長與重複檔群組。"
+
+msgid "Send each empty field to your AI provider and fill in the generated alt text (you can edit before applying)."
+msgstr "把每個空欄送到你選擇的 AI 服務，填入產生的 Alt 文字（套用前仍可編輯）。"
+
+msgid "Send every week"
+msgstr "每週寄送"
+
+msgid "Send test email now"
+msgstr "立即寄送測試郵件"
+
+msgid "Sent by PlugNest Media Folders Pro."
+msgstr "由 PlugNest Media Folders Pro 寄送。"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Skipped %d rows (no folder chosen)."
+msgstr "略過 %d 列（未選擇資料夾）。"
+
 msgid "Skipped (already assigned)"
 msgstr "已分類而略過"
 
@@ -840,8 +1231,17 @@ msgstr "請指定至少一個標籤。"
 msgid "Start import"
 msgstr "開始匯入"
 
+msgid "Stats"
+msgstr "統計"
+
 msgid "Status"
 msgstr "狀態"
+
+msgid "Suggest a folder for the selected images using your AI provider and the existing folder tree. Review, adjust, then apply."
+msgstr "用你的 AI 服務與現有資料夾樹，為選取的圖片建議歸檔資料夾。確認、調整後套用。"
+
+msgid "Suggest short tags for the selected images with your AI provider. Review the suggestions, edit if needed, then apply."
+msgstr "用你的 AI 服務為選取的圖片建議短標籤。確認或編輯後再套用。"
 
 msgid "Support"
 msgstr "支援"
@@ -858,11 +1258,38 @@ msgstr "標籤已刪除。"
 msgid "Tags"
 msgstr "標籤"
 
+msgid "Tags (comma-separated)…"
+msgstr "標籤（逗號分隔）…"
+
 msgid "Target folder (use / for nesting; folders are created automatically)"
 msgstr "歸入資料夾（可用 / 建立多層，不存在會自動建立）"
 
+msgid "Test report email sent to %s."
+msgstr "測試報告已寄送至 %s。"
+
+msgid "The PHP ZipArchive extension is missing on this server — ZIP export is unavailable."
+msgstr "伺服器缺少 PHP ZipArchive 延伸套件——無法匯出 ZIP。"
+
+msgid "The image file could not be read."
+msgstr "無法讀取圖片檔案。"
+
 msgid "The import data contains no usable folders or tags."
 msgstr "匯入資料中沒有可用的資料夾或標籤。"
+
+msgid "The original file is missing or not writable (offloaded files are not supported)."
+msgstr "原始檔遺失或不可寫入（不支援已 offload 的檔案）。"
+
+msgid "The replacement file failed to upload."
+msgstr "取代檔案上傳失敗。"
+
+msgid "The replacement must have the same extension as the original (.%s)."
+msgstr "取代檔案的副檔名必須與原檔相同（.%s）。"
+
+msgid "The report email could not be sent (check your site's email configuration)."
+msgstr "報告郵件無法寄送（請檢查網站的郵件設定）。"
+
+msgid "The service returned an empty response."
+msgstr "服務回傳空回應。"
 
 msgid "This action has already been undone."
 msgstr "這筆操作已經還原過了。"
@@ -870,8 +1297,17 @@ msgstr "這筆操作已經還原過了。"
 msgid "This action has no restorable snapshot (too many items, or the record is corrupted)."
 msgstr "這筆操作沒有可還原的完整快照（項目數過多或記錄已損毀）。"
 
+msgid "This download link has expired. Please export the ZIP again."
+msgstr "下載連結已過期，請重新匯出 ZIP。"
+
+msgid "This email address is not valid."
+msgstr "電子郵件格式不正確。"
+
 msgid "This feature is part of PlugNest Media Folders Pro:"
 msgstr "此功能屬於 PlugNest Media Folders Pro："
+
+msgid "This feature requires PlugNest Media Folders 2.6.0 or newer. Please update the free plugin."
+msgstr "此功能需要 PlugNest Media Folders 2.6.0 以上版本。請先更新免費版。"
 
 msgid "This feature requires an active PlugNest Media Folders Pro license."
 msgstr "此功能需要有效的 PlugNest Media Folders Pro 授權。"
@@ -893,6 +1329,12 @@ msgstr "標題 Z→A"
 
 msgid "Too many batches; stopped. Run again to continue."
 msgstr "處理批次過多，已停止。可重新執行以繼續。"
+
+msgid "Too many files (max %d per ZIP). Reduce the selection."
+msgstr "檔案過多（每次上限 %d 個），請縮小選取範圍。"
+
+msgid "Too many saved views (limit %d). Delete some first."
+msgstr "儲存的檢視太多（上限 %d 個），請先刪除部分。"
 
 msgid "Total media"
 msgstr "媒體總數"
@@ -942,6 +1384,9 @@ msgstr "取消釘選"
 msgid "Unused"
 msgstr "未被引用"
 
+msgid "Unused (as of the last usage scan)"
+msgstr "未使用（依上次使用掃描）"
+
 msgid "Unused media is now filtered. Review it, then delete with \"Delete permanently\" in the bulk bar."
 msgstr "已篩選出未使用媒體。確認後用批次列的「永久刪除」刪除。"
 
@@ -981,6 +1426,9 @@ msgstr "上傳日期："
 msgid "Uploading %1$d / %2$d (%3$d%%)"
 msgstr "上傳中 %1$d / %2$d（%3$d%%）"
 
+msgid "Usage numbers reflect the most recent usage scan; run a scan from the media manager for fresh numbers."
+msgstr "使用狀態數字反映最近一次掃描；請在媒體管理頁執行掃描以取得最新數據。"
+
 msgid "Usage scan"
 msgstr "使用狀態掃描"
 
@@ -1005,8 +1453,14 @@ msgstr "影片"
 msgid "Videos only"
 msgstr "僅影片"
 
+msgid "View deleted."
+msgstr "檢視已刪除。"
+
 msgid "View mode"
 msgstr "檢視模式"
+
+msgid "View not found."
+msgstr "找不到此檢視。"
 
 msgid "Visible roles (multi-select)"
 msgstr "可見角色（可多選）"
@@ -1017,11 +1471,23 @@ msgstr "⚠ 注意：其中 %d 個正在被文章使用中，刪除會造成文�
 msgid "Warning: this media is currently in use by posts; deleting will leave missing images in your content."
 msgstr "⚠ 注意：此媒體目前正在被文章使用中，刪除會造成文章內容缺圖。"
 
+msgid "Weekly maintenance report"
+msgstr "每週維護報告"
+
 msgid "Will be assigned"
 msgstr "將會被歸類"
 
+msgid "Will keep the %s copy in each group and PERMANENTLY DELETE the rest — including copies that are in use.\nFiles will be removed. This cannot be undone!\n\nContinue?"
+msgstr "每組將保留%s的副本，其餘全部永久刪除——包括使用中的副本。\n檔案將被移除，且無法復原！\n\n要繼續嗎？"
+
+msgid "Will keep the %s copy in each group and PERMANENTLY DELETE the rest. Copies that are in use (or not yet scanned) are skipped.\nFiles will be removed. This cannot be undone!\n\nContinue?"
+msgstr "每組將保留%s的副本，其餘全部永久刪除。使用中（或尚未掃描）的副本會被跳過。\n檔案將被移除，且無法復原！\n\n要繼續嗎？"
+
 msgid "Will rescan all site references (about 10–30 seconds), then permanently delete all %d unused media.\nFiles will be removed. This cannot be undone!\n\nContinue?"
 msgstr "將先重新掃描全站引用（約 10–30 秒），再「永久刪除」全部 %d 個未被引用的媒體。\n檔案會一併移除，無法復原！\n\n確定繼續嗎？"
+
+msgid "Write the text in %s."
+msgstr "以%s書寫。"
 
 msgid "Year (0 = any)"
 msgstr "年份（0=不限）"
@@ -1031,6 +1497,15 @@ msgstr "你沒有權限管理這個資料夾。"
 
 msgid "Your account does not have permission to manage media."
 msgstr "你的帳號沒有管理媒體的權限。"
+
+msgid "Your key is stored in this site's database and sent only to the provider you choose. Requests send a downscaled copy of each image."
+msgstr "金鑰儲存在本站資料庫，只會送到你選擇的服務商。請求只會傳送縮小後的圖片副本。"
+
+msgid "ZIP packing failed: %s"
+msgstr "打包失敗：%s"
+
+msgid "ZIP ready — download starting (%d files)."
+msgstr "ZIP 已就緒，開始下載（%d 個檔案）。"
 
 msgid "added"
 msgstr "已新增"
@@ -1043,6 +1518,9 @@ msgstr "流水號"
 
 msgid "drop onto a folder row and the files land in that folder; drop anywhere else and they land in"
 msgstr "拖到哪個資料夾就傳進那個資料夾，拖在其他位置＝"
+
+msgid "e.g. Traditional Chinese — leave empty to let the model decide"
+msgstr "例如：繁體中文——留空則由模型決定"
 
 msgid "e.g. Videos/ASMR"
 msgstr "例：影音匯/ASMR"
@@ -1074,11 +1552,17 @@ msgstr "完整檔名"
 msgid "items"
 msgstr "個"
 
+msgid "largest"
+msgstr "最大"
+
 msgid "media"
 msgstr "個媒體"
 
 msgid "moved to"
 msgstr "移動至"
+
+msgid "newest"
+msgstr "最新"
 
 msgid "no license key entered. Pro features are locked."
 msgstr "尚未輸入序號，Pro 功能已鎖定。"
@@ -1112,3 +1596,835 @@ msgstr "— 選擇資料夾 —"
 
 msgid "— Unassigned —"
 msgstr "— 未分類 —"
+
+msgid "＋ New: %s"
+msgstr "＋ 新資料夾：%s"
+
+#: (added by tools/i18n-build.py)
+msgid "%1$d min %2$d s"
+msgstr "%1$d 分 %2$d 秒"
+
+#: (added by tools/i18n-build.py)
+msgid "%d copies are in use"
+msgstr "%d 份使用中"
+
+#: (added by tools/i18n-build.py)
+msgid "%d copies are still queued — the browser continues automatically."
+msgstr "還有 %d 份在排隊，瀏覽器會自動繼續。"
+
+#: (added by tools/i18n-build.py)
+msgid "%d copies were kept because every copy in their group was selected (one copy per group is always kept)."
+msgstr "有 %d 份被保留，因為整組都被勾選（每組一定會留一份）。"
+
+#: (added by tools/i18n-build.py)
+msgid "%d copies were skipped because their usage has never been scanned — run \"Scan usage\" first, or tick \"Also delete copies in use / not yet scanned\"."
+msgstr "有 %d 份因為從未掃描使用狀態而被跳過——請先執行「掃描使用狀態」，或勾選「也刪除使用中／未掃描的副本」。"
+
+#: (added by tools/i18n-build.py)
+msgid "%d copies were skipped because they are in use."
+msgstr "有 %d 份因為仍在使用中而被跳過。"
+
+#: (added by tools/i18n-build.py)
+msgid "%d deleted"
+msgstr "已刪 %d"
+
+#: (added by tools/i18n-build.py)
+msgid "%d have never been scanned"
+msgstr "%d 份從未掃描"
+
+#: (added by tools/i18n-build.py)
+msgid "%d min"
+msgstr "%d 分"
+
+#: (added by tools/i18n-build.py)
+msgid "%d s"
+msgstr "%d 秒"
+
+#: (added by tools/i18n-build.py)
+msgid "(no title)"
+msgstr "（無標題）"
+
+#: (added by tools/i18n-build.py)
+msgid "(rewrite %1$s s / delete %2$s s)"
+msgstr "（改連結 %1$s 秒 / 刪檔 %2$s 秒）"
+
+#: (added by tools/i18n-build.py)
+msgid "1 copy is in use"
+msgstr "1 份使用中"
+
+#: (added by tools/i18n-build.py)
+msgid "1 has never been scanned"
+msgstr "1 份從未掃描"
+
+#: (added by tools/i18n-build.py)
+msgid "2.0.0 additions"
+msgstr "2.0.0 新增功能"
+
+#: (added by tools/i18n-build.py)
+msgid "3.0.0 additions"
+msgstr "3.0.0 新增功能"
+
+#: (added by tools/i18n-build.py)
+msgid "AI (bring your own key)"
+msgstr "AI（自備金鑰）"
+
+#: (added by tools/i18n-build.py)
+msgid "AI alt / tags / folders"
+msgstr "AI 補 Alt／標籤／資料夾"
+
+#: (added by tools/i18n-build.py)
+msgid "About %s left"
+msgstr "預計剩餘 %s"
+
+#: (added by tools/i18n-build.py)
+msgid "Activity log CSV"
+msgstr "操作記錄 CSV"
+
+#: (added by tools/i18n-build.py)
+msgid "Activity log CSV export"
+msgstr "操作記錄匯出 CSV"
+
+#: (added by tools/i18n-build.py)
+msgid "Allow deleting in-use copies, then press “Clean up duplicates” again"
+msgstr "允許刪除使用中的副本，然後再按一次「清理重複檔」"
+
+#: (added by tools/i18n-build.py)
+msgid "Allow deleting them"
+msgstr "允許刪除這些副本"
+
+#: (added by tools/i18n-build.py)
+msgid "Also delete copies in use / not yet scanned"
+msgstr "也刪除使用中／未掃描的副本"
+
+#: (added by tools/i18n-build.py)
+msgid "Alt text language"
+msgstr "Alt 文字語言"
+
+#: (added by tools/i18n-build.py)
+msgid "Attachment not found."
+msgstr "找不到這個附件。"
+
+#: (added by tools/i18n-build.py)
+msgid "Bottom of the left folder panel. Media count, type breakdown and disk usage per folder, sortable by size."
+msgstr "左側資料夾面板最下方。顯示每個資料夾的檔案數、類型分布與佔用空間，可按容量排序。"
+
+#: (added by tools/i18n-build.py)
+msgid "By default, copies that are referenced by posts — or that have never been usage-scanned — are never deleted."
+msgstr "預設不會刪除「被文章引用」或「從未掃描使用狀態」的副本。"
+
+#: (added by tools/i18n-build.py)
+msgid "Cleanup is still running. Stop it and close?"
+msgstr "清理仍在進行，要停止並關閉嗎？"
+
+#: (added by tools/i18n-build.py)
+msgid "Deleted %1$d of %2$d selected copies. Links rewritten: %3$d. Skipped: %4$d in use / restricted, %5$d never scanned, %6$d kept because the whole group was selected."
+msgstr "已刪除 %1$d / %2$d 份。改寫連結 %3$d 條。跳過：使用中／受限 %4$d 份、從未掃描 %5$d 份、因整組勾選而保留 %6$d 份。"
+
+#: (added by tools/i18n-build.py)
+msgid "Do not show this automatically next time"
+msgstr "下次開啟時不要再自動顯示"
+
+#: (added by tools/i18n-build.py)
+msgid "Done"
+msgstr "完成"
+
+#: (added by tools/i18n-build.py)
+msgid "Dropdown on the filter row plus the save icon beside it. Store any filter combination as a one-click view."
+msgstr "篩選列的下拉選單與旁邊的儲存圖示，可把任何篩選組合成為一鍵檢視。"
+
+#: (added by tools/i18n-build.py)
+msgid "Duplicate cleanup"
+msgstr "重複檔清理"
+
+#: (added by tools/i18n-build.py)
+msgid "Duplicate cleanup with checkboxes"
+msgstr "勾選式重複清理"
+
+#: (added by tools/i18n-build.py)
+msgid "Duplicate detection"
+msgstr "重複檔偵測"
+
+#: (added by tools/i18n-build.py)
+msgid "Duplicate hash index cleared. The next scan will re-hash every file."
+msgstr "重複檔雜湊索引已清除，下次掃描會重新計算所有檔案。"
+
+#: (added by tools/i18n-build.py)
+msgid "EXIF auto-fill"
+msgstr "EXIF 自動填補"
+
+#: (added by tools/i18n-build.py)
+msgid "Feature"
+msgstr "功能"
+
+#: (added by tools/i18n-build.py)
+msgid "Feature guide"
+msgstr "功能導覽"
+
+#: (added by tools/i18n-build.py)
+msgid "Featured image"
+msgstr "特色圖片"
+
+#: (added by tools/i18n-build.py)
+msgid "Filter row → the pin icon next to “Sort”. Click again to remove."
+msgstr "篩選列「排序」旁的圖釘，再按一次可取消。"
+
+#: (added by tools/i18n-build.py)
+msgid "Filter row → “views” dropdown + the save icon next to it."
+msgstr "篩選列「views」下拉＋旁邊的儲存圖示。"
+
+#: (added by tools/i18n-build.py)
+msgid "Folder ZIP download"
+msgstr "資料夾 ZIP 下載"
+
+#: (added by tools/i18n-build.py)
+msgid "Folder import / export"
+msgstr "資料夾匯入／匯出"
+
+#: (added by tools/i18n-build.py)
+msgid "Folder row “⋯” menu → “Roles”."
+msgstr "資料夾列的「⋯」選單 →「角色」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Folder row ⋯ menu → “Roles”."
+msgstr "資料夾列的「⋯」選單 →「角色」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Folder stats (count / types / disk usage)"
+msgstr "資料夾統計（數量／類型／容量）"
+
+#: (added by tools/i18n-build.py)
+msgid "Free"
+msgstr "免費"
+
+#: (added by tools/i18n-build.py)
+msgid "Full list in Settings"
+msgstr "完整清單（設定頁）"
+
+#: (added by tools/i18n-build.py)
+msgid "Got it"
+msgstr "知道了"
+
+#: (added by tools/i18n-build.py)
+msgid "Import / export folders"
+msgstr "匯入／匯出資料夾"
+
+#: (added by tools/i18n-build.py)
+msgid "In-use / unscanned copies are allowed. Post links will be rewritten to the kept copy."
+msgstr "已允許刪除使用中／未掃描的副本，文章連結會改指向保留的副本。"
+
+#: (added by tools/i18n-build.py)
+msgid "In-use copies are now allowed — press “Clean up duplicates” again."
+msgstr "已允許刪除使用中的副本，請再按一次「清理重複檔」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Included in the free plugin — no licence needed."
+msgstr "免費版就有，不需要任何授權。"
+
+#: (added by tools/i18n-build.py)
+msgid "Keep"
+msgstr "保留"
+
+#: (added by tools/i18n-build.py)
+msgid "Keep largest"
+msgstr "保留最大"
+
+#: (added by tools/i18n-build.py)
+msgid "Keep newest"
+msgstr "保留最新"
+
+#: (added by tools/i18n-build.py)
+msgid "Leave empty to disable AI features. The value is saved as the pnmfp_ai option."
+msgstr "留空即停用 AI 功能。設定值存於 pnmfp_ai。"
+
+#: (added by tools/i18n-build.py)
+msgid "Leave empty to use the provider default."
+msgstr "留空則使用供應商預設模型。"
+
+#: (added by tools/i18n-build.py)
+msgid "Left folder panel → “Find folder…” box."
+msgstr "左側資料夾面板的「搜尋資料夾…」框。"
+
+#: (added by tools/i18n-build.py)
+msgid "Left folder panel → “Stats” button at the bottom; sorted by size."
+msgstr "左側資料夾面板底部的「統計」按鈕，可按容量排序。"
+
+#: (added by tools/i18n-build.py)
+msgid "Left panel header → “Export”, “Import”, “From plugins”."
+msgstr "左側面板標頭：「匯出」「匯入」「從外掛」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Links in posts are rewritten to the kept copy."
+msgstr "文章內的連結會改指向保留的副本。"
+
+#: (added by tools/i18n-build.py)
+msgid "Loading references…"
+msgstr "載入引用…"
+
+#: (added by tools/i18n-build.py)
+msgid "Loading the list…"
+msgstr "正在讀取清單…"
+
+#: (added by tools/i18n-build.py)
+msgid "Media inspector (right panel) → “Replace file”."
+msgstr "媒體詳細資料（右側面板）→「取代檔案」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Missing alt modal → “Fill with AI”; bulk bar → “AI tags” / “AI folders”. Key: section above."
+msgstr "「待補 Alt」→「用 AI 填寫」；批次列「AI 標籤」／「AI 資料夾」。金鑰在上一節。"
+
+#: (added by tools/i18n-build.py)
+msgid "No API key yet — AI features will ask for one. Paste a key below and save."
+msgstr "還沒有 API 金鑰——AI 功能會提示需要。貼上金鑰並儲存即可。"
+
+#: (added by tools/i18n-build.py)
+msgid "No UI — titles/captions are filled from EXIF when a file is uploaded and the field is empty."
+msgstr "沒有介面：上傳時若欄位是空的，會自動從 EXIF 填入標題／說明。"
+
+#: (added by tools/i18n-build.py)
+msgid "No button — titles and descriptions are filled from EXIF on upload when the field is empty."
+msgstr "沒有按鈕：上傳時若欄位是空的，會自動從 EXIF 填入標題與說明。"
+
+#: (added by tools/i18n-build.py)
+msgid "No references found — the file may be used in custom fields, CSS backgrounds, or external embeds."
+msgstr "沒有找到引用——檔案可能寫在自訂欄位、CSS 背景或外部嵌入。"
+
+#: (added by tools/i18n-build.py)
+msgid "No running job."
+msgstr "目前沒有進行中的任務。"
+
+#: (added by tools/i18n-build.py)
+msgid "Nothing left to delete — those copies are already gone."
+msgstr "沒有可刪的了——這些副本已經不存在。"
+
+#: (added by tools/i18n-build.py)
+msgid "Nothing selected."
+msgstr "沒有選取任何項目。"
+
+#: (added by tools/i18n-build.py)
+msgid "Nothing to delete — every duplicate copy is protected (restricted by folder roles)."
+msgstr "沒有可刪的項目——所有重複副本都受保護（受資料夾角色限制）。"
+
+#: (added by tools/i18n-build.py)
+msgid "Nothing to fill — every field is empty."
+msgstr "沒有可填的內容——所有欄位都是空的。"
+
+#: (added by tools/i18n-build.py)
+msgid "Nothing was deleted."
+msgstr "沒有刪除任何檔案。"
+
+#: (added by tools/i18n-build.py)
+msgid "One minute. Each line tells you where the control sits on this screen."
+msgstr "一分鐘看完。每行都寫了它在畫面上的位置。"
+
+#: (added by tools/i18n-build.py)
+msgid "One-click duplicate cleanup (keep largest or newest)"
+msgstr "一鍵清理重複檔（保留最大或最新）"
+
+#: (added by tools/i18n-build.py)
+msgid "Only the first 50 references are listed."
+msgstr "只列出前 50 筆引用。"
+
+#: (added by tools/i18n-build.py)
+msgid "Open"
+msgstr "開啟"
+
+#: (added by tools/i18n-build.py)
+msgid "Optional. Leave empty to let the model decide."
+msgstr "選填。留空由模型自行判斷。"
+
+#: (added by tools/i18n-build.py)
+msgid "Per-folder default sort"
+msgstr "每個資料夾的預設排序"
+
+#: (added by tools/i18n-build.py)
+msgid "Pin icon next to the “Sort” dropdown. Pins the current order to the selected folder; click again to remove."
+msgstr "篩選列「排序」下拉旁的圖釘：把目前排序釘在所選資料夾，再按一次取消。"
+
+#: (added by tools/i18n-build.py)
+msgid "Plan / since"
+msgstr "方案／版本"
+
+#: (added by tools/i18n-build.py)
+msgid "Post content"
+msgstr "內文"
+
+#: (added by tools/i18n-build.py)
+msgid "Preparing…"
+msgstr "準備中…"
+
+#: (added by tools/i18n-build.py)
+msgid "Pro"
+msgstr "Pro"
+
+#: (added by tools/i18n-build.py)
+msgid "Pro add-on features — an active licence is required."
+msgstr "Pro 外掛功能，需要有效授權。"
+
+#: (added by tools/i18n-build.py)
+msgid "Processing: %s"
+msgstr "目前處理：%s"
+
+#: (added by tools/i18n-build.py)
+msgid "Provider, API key and model used by the AI features"
+msgstr "AI 功能使用的供應商、API 金鑰與模型"
+
+#: (added by tools/i18n-build.py)
+msgid "Quick folder search"
+msgstr "快速跳資料夾"
+
+#: (added by tools/i18n-build.py)
+msgid "Quick folder search (Ctrl+K)"
+msgstr "快速跳資料夾（Ctrl+K）"
+
+#: (added by tools/i18n-build.py)
+msgid "Quick map for the 3.0.0 / 2.0.0 additions — every row is a real control in the media screen."
+msgstr "3.0.0／2.0.0 新增功能的快速對照表——每一列都是媒體頁上真實的控件。"
+
+#: (added by tools/i18n-build.py)
+msgid "References"
+msgstr "引用"
+
+#: (added by tools/i18n-build.py)
+msgid "Replace media file (URL unchanged)"
+msgstr "取代媒體檔案（網址不變）"
+
+#: (added by tools/i18n-build.py)
+msgid "Right-hand inspector when a single item is selected. Swaps the file but keeps the URL."
+msgstr "選取單一媒體後，右側詳細資料面板。換掉檔案內容但網址不變。"
+
+#: (added by tools/i18n-build.py)
+msgid "Saved views (smart filters)"
+msgstr "儲存檢視（智慧篩選）"
+
+#: (added by tools/i18n-build.py)
+msgid "Scan usage first"
+msgstr "先掃描使用狀態"
+
+#: (added by tools/i18n-build.py)
+msgid "See Pro"
+msgstr "了解 Pro"
+
+#: (added by tools/i18n-build.py)
+msgid "Select all copies"
+msgstr "全選副本"
+
+#: (added by tools/i18n-build.py)
+msgid "Select media → bulk bar → “Download ZIP”."
+msgstr "勾選媒體 → 批次列 →「下載 ZIP」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Server time: %s s."
+msgstr "伺服器耗時 %s 秒。"
+
+#: (added by tools/i18n-build.py)
+msgid "Settings → PlugNest Media Folders Pro, below the licence table."
+msgstr "設定 → PlugNest Media Folders Pro，授權表下方。"
+
+#: (added by tools/i18n-build.py)
+msgid "Stop"
+msgstr "停止"
+
+#: (added by tools/i18n-build.py)
+msgid "Stop requested — finishing the current item…"
+msgstr "已送出停止指令，正在收尾目前這一份…"
+
+#: (added by tools/i18n-build.py)
+msgid "Stopped"
+msgstr "已停止"
+
+#: (added by tools/i18n-build.py)
+msgid "Stopped — %1$d of %2$d copies were deleted before you cancelled."
+msgstr "已停止——取消前共刪除 %1$d / %2$d 份。"
+
+#: (added by tools/i18n-build.py)
+msgid "Stopped — %d copies were deleted before you cancelled."
+msgstr "已停止——取消前共刪除 %d 份。"
+
+#: (added by tools/i18n-build.py)
+msgid "Stopping…"
+msgstr "停止中…"
+
+#: (added by tools/i18n-build.py)
+msgid "This feature requires PlugNest Media Folders 2.7.0 or newer. Please update the free plugin."
+msgstr "這個功能需要 PlugNest Media Folders 2.7.0 以上，請更新免費版。"
+
+#: (added by tools/i18n-build.py)
+msgid "This page, sections below the license table."
+msgstr "本頁，授權表下方的區塊。"
+
+#: (added by tools/i18n-build.py)
+msgid "Tick at least one copy to delete first."
+msgstr "請先勾選至少一份要刪除的副本。"
+
+#: (added by tools/i18n-build.py)
+msgid "Tick every copy to be deleted. One copy per group is always kept — if you tick them all, the largest/newest one is kept automatically."
+msgstr "勾選要刪除的副本。每組至少保留一份——若整組都勾，會自動保留最大／最新的那一份。"
+
+#: (added by tools/i18n-build.py)
+msgid "Tick the copies you want to delete"
+msgstr "勾選要刪除的副本"
+
+#: (added by tools/i18n-build.py)
+msgid "Toolbar → “Activity log” → “Export CSV”."
+msgstr "工具列 →「操作記錄」→「匯出 CSV」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Toolbar → “Find duplicates” → tick the copies to delete → “Clean up duplicates”."
+msgstr "工具列 →「找出重複檔案」→ 勾選要刪的副本 →「清理重複檔」。"
+
+#: (added by tools/i18n-build.py)
+msgid "Toolbar, top right. Groups identical files by content hash with thumbnails, sizes and usage badges. Read-only."
+msgstr "右上工具列。依內容雜湊把相同檔案分組，附縮圖、大小與使用狀態；只報告不刪除。"
+
+#: (added by tools/i18n-build.py)
+msgid "Used by AI alt text, AI tag suggestions and AI folder suggestions. The key is stored in this site's database and sent only to the provider you pick. Requests send a downscaled copy of each image."
+msgstr "用於 AI 補 Alt、AI 標籤建議與 AI 資料夾建議。金鑰存在本站資料庫，只會送到你選擇的供應商；每次請求會傳送縮小後的圖片。"
+
+#: (added by tools/i18n-build.py)
+msgid "View"
+msgstr "檢視"
+
+#: (added by tools/i18n-build.py)
+msgid "WP-CLI commands"
+msgstr "WP-CLI 指令"
+
+#: (added by tools/i18n-build.py)
+msgid "Weekly maintenance report / scheduled auto-assign"
+msgstr "每週維護報告／排程自動歸檔"
+
+#: (added by tools/i18n-build.py)
+msgid "Weekly report & scheduled re-run"
+msgstr "每週維護報告與排程重跑"
+
+#: (added by tools/i18n-build.py)
+msgid "What is new in 3.0.0 / 2.0.0 and where to find it"
+msgstr "3.0.0／2.0.0 新增功能與位置"
+
+#: (added by tools/i18n-build.py)
+msgid "What is new — and where to find it"
+msgstr "新增功能在哪裡"
+
+#: (added by tools/i18n-build.py)
+msgid "Where"
+msgstr "位置"
+
+#: (added by tools/i18n-build.py)
+msgid "Where to find each feature"
+msgstr "各功能在哪裡"
+
+#: (added by tools/i18n-build.py)
+msgid "Will PERMANENTLY DELETE %1$d selected copies — including copies that are in use. Each group always keeps at least one copy (the %2$s one if you ticked them all).\nFiles will be removed. This cannot be undone!\n\nContinue?"
+msgstr "將永久刪除已選的 %1$d 份副本——包含使用中的副本。每組一定保留至少一份（若全選則保留%2$s的那一份）。\n檔案會被移除，無法復原！\n\n要繼續嗎？"
+
+#: (added by tools/i18n-build.py)
+msgid "Will PERMANENTLY DELETE %1$d selected copies. Copies that are in use (or not yet scanned) are skipped. Each group always keeps at least one copy (the %2$s one if you ticked them all).\nFiles will be removed. This cannot be undone!\n\nContinue?"
+msgstr "將永久刪除已選的 %1$d 份副本。使用中（或未掃描）的副本會被跳過。每組一定保留至少一份（若全選則保留%2$s的那一份）。\n檔案會被移除，無法復原！\n\n要繼續嗎？"
+
+#: (added by tools/i18n-build.py)
+msgid "You have the free version only"
+msgstr "你目前只有免費版"
+
+#: (added by tools/i18n-build.py)
+msgid "ZIP download"
+msgstr "ZIP 下載"
+
+#: (added by tools/i18n-build.py)
+msgid "\nNote: %d of the selected copies are marked “in use” and will be SKIPPED unless you tick “Also delete copies in use / not yet scanned”."
+msgstr "\n注意：已選的副本中有 %d 份標記為「使用中」，除非勾選「也刪除使用中／未掃描的副本」，否則會被跳過。"
+
+#: (added by tools/i18n-build.py)
+msgid "e.g. Traditional Chinese"
+msgstr "例如：繁體中文"
+
+#: (added by tools/i18n-build.py)
+msgid "processing"
+msgstr "處理中"
+
+#: (added by tools/i18n-build.py)
+msgid "protected by default."
+msgstr "預設受保護。"
+
+#: (added by tools/i18n-build.py)
+msgid "the locations below do not exist on this screen until the Pro add-on is installed and activated."
+msgstr "下列位置在安裝並啟用 Pro 外掛前不會出現在畫面上。"
+
+#: (added by tools/i18n-build.py)
+msgid "wp pnmf stats / hash-build / dupe-scan / usage-scan"
+msgstr "wp pnmf stats / hash-build / dupe-scan / usage-scan"
+
+#: (added by tools/i18n-build.py)
+msgid "“Find duplicates” → tick the copies to delete → “Clean up duplicates”. One copy per group is always kept; runs in batches with a progress bar and a Stop button."
+msgstr "「找出重複檔案」→ 勾選要刪的副本 →「清理重複檔」。每組一定留一份；分批執行並顯示進度與停止按鈕。"
+
+#: (added by tools/i18n-build.py)
+msgid "“Find folder…” box on the left panel. Type to jump straight to a folder."
+msgstr "左側面板的「搜尋資料夾…」框，輸入即可跳到該資料夾。"
+
+#: (added by tools/i18n-build.py)
+msgid "“Missing alt” → “Fill with AI”; bulk bar → “AI tags” / “AI folders”. API key: “AI settings” in the toolbar."
+msgstr "「待補 Alt」→「用 AI 填寫」；批次列「AI 標籤」／「AI 資料夾」。金鑰填在工具列的「AI 設定」。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "%1$d / %2$d hashed"
+msgstr "已計算 %1$d / %2$d"
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing stopped."
+msgstr "已停止計算雜湊。"
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing stopped — %d files are still unhashed. Run it again to continue."
+msgstr "已停止——還有 %d 個檔案未計算雜湊，再執行一次即可續算。"
+
+#: (added by tools/i18n-build.py)
+msgid "The server did not answer in time. The work may still be running — try again, or lower the batch size."
+msgstr "伺服器沒有及時回應，工作可能仍在進行——請再試一次，或降低批次大小。"
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing is still running. Stop it and close?"
+msgstr "雜湊計算仍在進行，要停止並關閉嗎？"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing stopped unexpectedly — try running it again."
+msgstr "雜湊計算意外中止——請再執行一次。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing stopped: %1$d files could not be saved to the database (IDs: %2$s). Check database write permissions, or disable the object cache and try again."
+msgstr "雜湊停止：有 %1$d 個檔案寫不進資料庫（ID：%2$s）。請檢查資料庫寫入權限，或先停用物件快取再試。"
+
+#: (added by tools/i18n-build.py)
+msgid "Hashing stopped: %1$d files keep failing (IDs: %2$s). They may be missing from disk, unreadable, or have duplicate meta rows."
+msgstr "雜湊停止：有 %1$d 個檔案一直失敗（ID：%2$s）。可能檔案不在磁碟上、讀不到，或有重複的中繼資料列。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "%1$d files could not be saved to the database (IDs: %2$s). The rest were hashed."
+msgstr "有 %1$d 個檔案寫不進資料庫（ID：%2$s），其餘已計算完成。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "%1$d files could not be hashed (IDs: %2$s). The rest were hashed; these were skipped so the run could finish."
+msgstr "有 %1$d 個檔案無法計算雜湊（ID：%2$s）。其餘已完成，這些檔案已被跳過，避免整批卡住。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "The mail server said: %s"
+msgstr "郵件伺服器回報：%s"
+
+#: (added by tools/i18n-build.py)
+msgid "The report email could not be sent."
+msgstr "報告郵件無法寄出。"
+
+#: (added by tools/i18n-build.py)
+msgid "Most hosts block PHP mail(); install an SMTP plugin (WP Mail SMTP, FluentSMTP) and send a test from there. The report itself is generated correctly."
+msgstr "多數主機禁用 PHP mail()。請安裝 SMTP 外掛（WP Mail SMTP、FluentSMTP）並先寄測試信；報告內容本身是正常產生的。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "From: %1$s → To: %2$s."
+msgstr "寄件者：%1$s → 收件者：%2$s。"
+
+#: (added by tools/i18n-build.py)
+msgid "The last sending attempt failed."
+msgstr "上一次寄送失敗。"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP's last failed log says: %s"
+msgstr "FluentSMTP 最近一筆失敗記錄：%s"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP is installed but has no connection configured yet: finish its setup (provider + sender) and send a test email there first."
+msgstr "FluentSMTP 已安裝但尚未建立連線：請先完成設定（供應商＋寄件者），並在 FluentSMTP 內寄一封測試信。"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP is configured — check FluentSMTP → Email Logs; the sender address usually has to match the authenticated domain."
+msgstr "FluentSMTP 已設定——請看 FluentSMTP → Email Logs；寄件者位址通常必須與驗證的網域一致。"
+
+#: (added by tools/i18n-build.py)
+msgid "WP Mail SMTP is installed — run its “Email Test” to see the provider error, and make sure the From address uses your domain."
+msgstr "已安裝 WP Mail SMTP——請用它內建的「Email Test」看供應商錯誤，並確認寄件者使用你的網域。"
+
+#: (added by tools/i18n-build.py)
+msgid "No SMTP plugin detected: WordPress falls back to PHP mail(), which most hosts block. Install FluentSMTP or WP Mail SMTP and send a test email there first."
+msgstr "未偵測到 SMTP 外掛：WordPress 會退回 PHP mail()，多數主機都封鎖。請安裝 FluentSMTP 或 WP Mail SMTP，並先在那裡寄測試信。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Sender: %1$s → Recipient: %2$s"
+msgstr "寄件者：%1$s → 收件者：%2$s"
+
+#: (added by tools/i18n-build.py)
+msgid "(not set)"
+msgstr "（未設定）"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP is set to read the %s OAuth keys from wp-config.php, but the constants are missing — the Client ID therefore reaches the provider empty and the request is rejected. Declare FLUENTMAIL_GMAIL_CLIENT_ID and FLUENTMAIL_GMAIL_CLIENT_SECRET in wp-config.php, or switch that connection to “database” in FluentSMTP and paste the keys there, then reconnect."
+msgstr "FluentSMTP 設定成從 wp-config.php 讀取 %s 的 OAuth 金鑰，但常數沒有定義——送到供應商的 Client ID 因此是空的，請求被拒。請在 wp-config.php 宣告 FLUENTMAIL_GMAIL_CLIENT_ID 與 FLUENTMAIL_GMAIL_CLIENT_SECRET，或在 FluentSMTP 把該連線改成「資料庫」並直接填入金鑰，然後重新連線。"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP has no OAuth Client ID for this %s connection. Paste the Client ID and Secret from Google Cloud Console (OAuth client of type “Web application”) into FluentSMTP, then click “Connect to Google” again."
+msgstr "FluentSMTP 的這個 %s 連線沒有 OAuth Client ID。請把 Google Cloud Console 的 Client ID 與 Secret（OAuth 用戶端類型選「網頁應用程式」）貼進 FluentSMTP，再按一次「Connect to Google」。"
+
+#: (added by tools/i18n-build.py)
+msgid "The %s OAuth keys exist, but the authorisation is no longer valid (the refresh token was revoked or expired). In FluentSMTP remove that connection and add it again, completing the consent screen — this also refreshes the token."
+msgstr "%s 的 OAuth 金鑰存在，但授權已失效（refresh token 被撤銷或過期）。請在 FluentSMTP 刪除該連線並重新新增，走完同意畫面——這會同時更新 token。"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP has no sender address on the default connection — set “From Email” there; most providers reject mail without a verified sender."
+msgstr "FluentSMTP 的預設連線沒有寄件者位址——請在該連線設定「From Email」；多數供應商會拒收沒有驗證寄件者的郵件。"
+
+#: (added by tools/i18n-build.py)
+msgid "The provider rejected the request because no OAuth Client ID was sent. Check the SMTP plugin's connection settings and reconnect the account."
+msgstr "供應商因為沒有送出 OAuth Client ID 而拒絕請求。請檢查 SMTP 外掛的連線設定並重新連接帳號。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Mail transport: an SMTP plugin is active, but its connection settings could not be read."
+msgstr "寄信方式：偵測到 SMTP 外掛，但讀不到它的連線設定。"
+
+#: (added by tools/i18n-build.py)
+msgid "Mail transport: PHP mail() — no SMTP plugin is active, so most hosts will refuse to deliver."
+msgstr "寄信方式：PHP mail()——沒有啟用 SMTP 外掛，多數主機不會投遞。"
+
+#: (added by tools/i18n-build.py)
+msgid "OAuth keys from wp-config.php"
+msgstr "OAuth 金鑰來自 wp-config.php"
+
+#: (added by tools/i18n-build.py)
+msgid "wp-config.php keys are missing"
+msgstr "wp-config.php 的常數未定義"
+
+#: (added by tools/i18n-build.py)
+msgid "OAuth keys stored in the database"
+msgstr "OAuth 金鑰存在資料庫"
+
+#: (added by tools/i18n-build.py)
+msgid "OAuth Client ID is empty"
+msgstr "OAuth Client ID 是空的"
+
+#: (added by tools/i18n-build.py)
+msgid "Mail transport: FluentSMTP — %s"
+msgstr "寄信方式：FluentSMTP — %s"
+
+#: (added by tools/i18n-build.py)
+msgid "sender %s"
+msgstr "寄件者 %s"
+
+#: (added by tools/i18n-build.py)
+msgid "sender not set"
+msgstr "寄件者未設定"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Sender:"
+msgstr "寄件者："
+
+#: (added by tools/i18n-build.py)
+msgid "Recipient:"
+msgstr "收件者："
+
+#: (added by tools/i18n-build.py)
+msgid "The %s Client ID never reaches the provider: FluentSMTP is set to read it from wp-config.php and that constant is missing or empty. Declare FLUENTMAIL_GMAIL_CLIENT_ID and FLUENTMAIL_GMAIL_CLIENT_SECRET there, or switch the connection to “database” in FluentSMTP and paste the keys in the form, then reconnect."
+msgstr "%s 的 Client ID 根本沒有送到供應商：FluentSMTP 設定成從 wp-config.php 讀取，而那個常數不存在或是空的。請在該檔宣告 FLUENTMAIL_GMAIL_CLIENT_ID 與 FLUENTMAIL_GMAIL_CLIENT_SECRET，或在 FluentSMTP 把連線改成「資料庫」並在表單填入金鑰，然後重新連線。"
+
+#: (added by tools/i18n-build.py)
+msgid "The provider received no Client ID even though this %s connection has one stored — the value is stale, or a different connection handles this email. Open the connection in FluentSMTP, paste the Application Client ID and Secret again, save, then click “Connect to Google”."
+msgstr "供應商沒有收到 Client ID，但這條 %s 連線裡明明有存——可能那個值是舊的，或這封信其實走了另一條連線。請在 FluentSMTP 打開該連線，重新貼上 Application Client ID 與 Secret，儲存後按「Connect to Google」。"
+
+#: (added by tools/i18n-build.py)
+msgid "The %s OAuth keys exist, but the authorisation was revoked or expired. In FluentSMTP remove that connection and add it again, completing the consent screen. If the Google consent screen is still in “Testing”, Google expires refresh tokens after 7 days — publish the app to stop re-authorising every week."
+msgstr "%s 的 OAuth 金鑰存在，但授權已被撤銷或過期。請在 FluentSMTP 刪除該連線並重新新增，走完同意畫面。若 Google 的同意畫面還在「測試」狀態，refresh token 每 7 天就會失效——把應用程式發布上線就不必每週重新授權。"
+
+#: (added by tools/i18n-build.py)
+msgid "The %s connection looks configured, but the provider still refused the message — open FluentSMTP → Email Logs for its full response."
+msgstr "%s 連線看起來已設定完成，但供應商仍拒收——請開 FluentSMTP → Email Logs 看完整回應。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "The Client Secret is empty on this %1$s connection (OAuth client %2$s), so Google rejects the token refresh — every email through this connection fails, not just this report. Open Google Cloud Console → Credentials → that OAuth client, copy the Client Secret, paste it into FluentSMTP, save, then click “Connect to Google”."
+msgstr "這條 %1$s 連線的 Client Secret 是空的（OAuth 用戶端 %2$s），所以 Google 會拒絕更新權杖——這個連線寄出的所有郵件都會失敗，不只本報告。請到 Google Cloud Console → Credentials 找到該 OAuth 用戶端，複製 Client Secret，貼回 FluentSMTP 儲存，然後按「Connect to Google」。"
+
+#: (added by tools/i18n-build.py)
+msgid "The stored access token expired on %s."
+msgstr "已儲存的存取權杖已於 %s 過期。"
+
+#: (added by tools/i18n-build.py)
+msgid "Client Secret is empty"
+msgstr "Client Secret 是空的"
+
+
+#: (added by tools/i18n-build.py)
+msgid "The %s Client ID never reaches the provider: the connection is set to “Store in wp-config.php” and that constant is missing or empty — the two key fields are only shown when the connection is set to “Store in Database”. Switch it back to “Store in Database” and paste the Client ID and Secret there (or declare FLUENTMAIL_GMAIL_CLIENT_ID and FLUENTMAIL_GMAIL_CLIENT_SECRET in wp-config.php), then reconnect."
+msgstr "%s 的 Client ID 沒有送到供應商：連線被設成「Store in wp-config.php」，而該常數不存在或是空的——那兩個金鑰欄位只有在「Store in Database」模式才會顯示。請切回「Store in Database」並在該處貼上 Client ID 與 Secret（或在 wp-config.php 宣告 FLUENTMAIL_GMAIL_CLIENT_ID 與 FLUENTMAIL_GMAIL_CLIENT_SECRET），然後重新連線。"
+
+#: (added by tools/i18n-build.py)
+msgid "FluentSMTP is set to read the %s OAuth keys from wp-config.php, but the constants are missing — so the Client ID reaches the provider empty. Either declare FLUENTMAIL_GMAIL_CLIENT_ID and FLUENTMAIL_GMAIL_CLIENT_SECRET in wp-config.php, or switch the connection to “Store in Database” (the two key fields only appear in that mode) and paste the keys there, then reconnect."
+msgstr "FluentSMTP 設定成從 wp-config.php 讀取 %s 的 OAuth 金鑰，但常數不存在——所以送出的 Client ID 是空的。請在 wp-config.php 宣告 FLUENTMAIL_GMAIL_CLIENT_ID 與 FLUENTMAIL_GMAIL_CLIENT_SECRET，或把連線改成「Store in Database」（兩個金鑰欄位只在該模式出現）並貼上金鑰，然後重新連線。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "The saved error message was cleared."
+msgstr "已清除儲存的錯誤訊息。"
+
+#: (added by tools/i18n-build.py)
+msgid "Dismiss this message"
+msgstr "清除這則訊息"
+
+
+#: (added by tools/i18n-build.py)
+msgid "%d filled"
+msgstr "已填 %d"
+
+#: (added by tools/i18n-build.py)
+msgid "Stop requested — finishing the current image…"
+msgstr "已送出停止指令，正在收尾目前這張…"
+
+#: (added by tools/i18n-build.py)
+msgid "AI stopped unexpectedly — try again."
+msgstr "AI 意外中止——請再試一次。"
+
+#: (added by tools/i18n-build.py)
+msgid "AI stopped — %1$d of %2$d fields were filled before you cancelled."
+msgstr "已停止——在你取消前已填寫 %1$d / %2$d 個欄位。"
+
+#: (added by tools/i18n-build.py)
+msgid "AI is still filling fields. Stop it and close?"
+msgstr "AI 仍在填寫欄位，要停止並關閉嗎？"
+
+
+#: (added by tools/i18n-build.py)
+msgid "Quality: full vision models (gpt-4o, gemini-2.0-flash) describe images noticeably better than the mini models. DeepSeek cannot read images, so its alt text is guesswork — use it only for tags."
+msgstr "品質：完整視覺模型（gpt-4o、gemini-2.0-flash）的描述明顯比 mini 系列好。DeepSeek 不能讀圖片，用它產生的 alt 文字只是猜測——建議只用在標籤。"
+
+#: (added by tools/i18n-build.py)
+msgid "Write the alt text in %s."
+msgstr "請用%s撰寫這段替代文字。"
+
+#: (added by tools/i18n-build.py)
+msgid "The image could not be prepared for AI."
+msgstr "圖片無法處理成可送出的格式。"
+
+
+#: (added by tools/i18n-build.py)
+msgid "API base URL (optional)"
+msgstr "API 端點網址（選填）"
+
+#: (added by tools/i18n-build.py)
+msgid "Leave empty for the official endpoint. If your server cannot reach the provider (common on mainland-China hosting), put a reachable OpenAI-compatible endpoint here — it will be used for this site only."
+msgstr "留空使用官方端點。若你的主機連不到供應商（中國大陸主機常見），可填入一個可連線、相容 OpenAI 的端點——只影響本站。"
+
+#: (added by tools/i18n-build.py)
+msgid "AI request failed: %s"
+msgstr "AI 請求失敗：%s"
+
+#: (added by tools/i18n-build.py)
+msgid "The AI provider did not answer in time. Check the API base URL and that your server can reach it."
+msgstr "AI 供應商沒有及時回應。請檢查 API 端點網址，並確認伺服器能連上它。"
+
+#: (added by tools/i18n-build.py)
+msgid "Every image in the batch failed — check the API key and base URL."
+msgstr "這批每一張都失敗——請檢查 API key 與端點網址。"
+
